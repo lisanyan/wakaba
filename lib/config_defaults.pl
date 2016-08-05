@@ -6,7 +6,7 @@ BEGIN {
 	use constant S_NOSQL => 'No SQL settings defined in the configuration';		# Returns error when the config is incomplete
 
 	die S_NOADMIN unless(defined &ADMIN_PASS);
-	die S_NOADMIN unless(defined &NUKE_PASS);
+	# die S_NOADMIN unless(defined &NUKE_PASS);
 	die S_NOSECRET unless(defined &SECRET);
 	die S_NOSQL unless(defined &SQL_DBI_SOURCE);
 	die S_NOSQL unless(defined &SQL_USERNAME);
@@ -22,7 +22,7 @@ BEGIN {
 	eval "use constant SHOWTITLETXT => 1" unless(defined &SHOWTITLETXT);
 	eval "use constant SHOWTITLEIMG => 0" unless(defined &SHOWTITLEIMG);
 	eval "use constant TITLEIMG => 'title.jpg'" unless(defined &TITLEIMG);
-	eval "use constant FAVICON => 'wakaba.ico'" unless(defined &FAVICON);
+	eval "use constant FAVICON => '/wakaba.ico'" unless(defined &FAVICON);
 	eval "use constant HOME => '../'" unless(defined &HOME);
 	eval "use constant IMAGES_PER_PAGE => 10" unless(defined &IMAGES_PER_PAGE);
 	eval "use constant REPLIES_PER_THREAD => 10" unless(defined &REPLIES_PER_THREAD);
@@ -51,7 +51,7 @@ BEGIN {
 	eval "use constant ENABLE_CAPTCHA => 1" unless(defined &ENABLE_CAPTCHA);
 	eval "use constant SQL_CAPTCHA_TABLE => 'captcha'" unless(defined &SQL_CAPTCHA_TABLE);
 	eval "use constant CAPTCHA_LIFETIME => 1440" unless(defined &CAPTCHA_LIFETIME);
-	eval "use constant CAPTCHA_SCRIPT => 'captcha.pl'" unless(defined &CAPTCHA_SCRIPT);
+	eval "use constant CAPTCHA_SCRIPT => '/captcha.pl'" unless(defined &CAPTCHA_SCRIPT);
 	eval "use constant CAPTCHA_HEIGHT => 18" unless(defined &CAPTCHA_HEIGHT);
 	eval "use constant CAPTCHA_SCRIBBLE => 0.2" unless(defined &CAPTCHA_SCRIBBLE);
 	eval "use constant CAPTCHA_SCALING => 0.15" unless(defined &CAPTCHA_SCALING);
@@ -62,11 +62,6 @@ BEGIN {
 	eval "use constant LOAD_SENDER_SCRIPT => 'sender.pl'" unless(defined &LOAD_SENDER_SCRIPT);
 	eval "use constant LOAD_LOCAL => 999" unless(defined &LOAD_LOCAL);
 	eval "use constant LOAD_HOSTS => ()" unless(defined &LOAD_HOSTS);
-
-	eval "use constant ENABLE_PROXY_CHECK => 0" unless(defined &ENABLE_PROXY_CHECK);
-	eval "use constant PROXY_COMMAND => ''" unless(defined &PROXY_COMMAND);
-	eval "use constant PROXY_WHITE_AGE => 604800" unless(defined &PROXY_WHITE_AGE);
-	eval "use constant PROXY_BLACK_AGE => 604800" unless(defined &PROXY_BLACK_AGE);
 
 	eval "use constant THUMBNAIL_SMALL => 1" unless(defined &THUMBNAIL_SMALL);
 	eval "use constant THUMBNAIL_QUALITY => 70" unless(defined &THUMBNAIL_QUALITY);
@@ -99,7 +94,6 @@ BEGIN {
 	eval "use constant COOKIE_PATH => 'root'" unless(defined &COOKIE_PATH);
 	eval "use constant STYLE_COOKIE => 'wakabastyle'" unless(defined &STYLE_COOKIE);
 	eval "use constant FORCED_ANON => 0" unless(defined &FORCED_ANON);
-	eval "use constant USE_XHTML => 1" unless(defined &USE_XHTML);
 	eval "use constant SPAM_TRAP => 1" unless(defined &SPAM_TRAP);
 
 	eval "use constant IMG_DIR => 'src/'" unless(defined &IMG_DIR);
@@ -108,21 +102,15 @@ BEGIN {
 	eval "use constant ARCHIVE_DIR => 'arch/'" unless (defined &ARCHIVE_DIR);
 	eval "use constant REDIR_DIR => 'redir/'" unless (defined &REDIR_DIR);
 	eval "use constant HTML_SELF => 'wakaba.html'" unless(defined &HTML_SELF);
-	eval "use constant JS_FILE => 'wakaba3.js'" unless(defined &JS_FILE);
+	eval "use constant JS_FILE => '/static/wakaba3.js'" unless(defined &JS_FILE);
 	eval "use constant CSS_DIR => 'css/'" unless(defined &CSS_DIR);
 	eval "use constant PAGE_EXT => '.html'" unless(defined &PAGE_EXT);
 	eval "use constant ERRORLOG => ''" unless(defined &ERRORLOG);
 	eval "use constant CONVERT_COMMAND => 'convert'" unless(defined &CONVERT_COMMAND);
-	unless(defined &SPAM_FILES)
-	{
-		if(defined &SPAM_FILE) { eval "use constant SPAM_FILES => (SPAM_FILE)" }
-		else { eval "use constant SPAM_FILES => ('spam.txt')" }
-	}
-#	eval "use constant SPAM_FILE => 'spam.txt'" unless(defined &SPAM_FILE);
 
 	eval "use constant FILETYPES => ()" unless(defined &FILETYPES);
 
-	eval "use constant WAKABA_VERSION => '3.0.8'" unless(defined &WAKABA_VERSION);
+	eval "use constant WAKABA_VERSION => '3.0.9'" unless(defined &WAKABA_VERSION);
 }
 
 1;

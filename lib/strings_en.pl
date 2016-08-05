@@ -1,3 +1,4 @@
+use utf8;
 use constant S_HOME => 'Home';										# Forwards to home page
 use constant S_ADMIN => 'Manage';									# Forwards to Management Panel
 use constant S_RETURN => 'Return';									# Returns to image board
@@ -16,7 +17,7 @@ use constant S_DELPASS => 'Password';								# Describes password field
 use constant S_DELEXPL => '(for post and file deletion)';			# Prints explanation for password box (to the right)
 use constant S_SPAMTRAP => 'Leave these fields empty (spam trap): ';
 
-use constant S_THUMB => 'Thumbnail displayed, click image for full size.';	# Prints instructions for viewing real source
+use constant S_THUMB => ''; #'Thumbnail displayed, click image for full size.';	# Prints instructions for viewing real source
 use constant S_HIDDEN => 'Thumbnail hidden, click filename for the full image.';	# Prints instructions for viewing hidden image reply
 use constant S_NOTHUMB => 'No<br />thumbnail';								# Printed when there's no thumbnail
 use constant S_PICNAME => 'File: ';											# Prints text before upload name/link
@@ -46,14 +47,10 @@ use constant S_ADMINPASS => 'Admin password:';							# Prints login prompt
 
 use constant S_MANAPANEL => 'Management Panel';							# Defines Management Panel radio button--allows the user to view the management panel (overview of all posts)
 use constant S_MANABANS => 'Bans/Whitelist';							# Defines Bans Panel button
-use constant S_MANAPROXY => 'Proxy Panel';
-use constant S_MANASPAM => 'Spam';										# Defines Spam Panel button
-use constant S_MANASQLDUMP => 'SQL Dump';								# Defines SQL dump button
-use constant S_MANASQLINT => 'SQL Interface';							# Defines SQL interface button
 use constant S_MANAPOST => 'Manager Post';								# Defines Manager Post radio button--allows the user to post using HTML code in the comment box
-use constant S_MANAREBUILD => 'Rebuild caches';							# 
-use constant S_MANANUKE => 'Nuke board';								# 
-use constant S_MANALOGOUT => 'Log out';									# 
+use constant S_MANAREBUILD => 'Rebuild caches';							#
+use constant S_MANANUKE => 'Nuke board';								#
+use constant S_MANALOGOUT => 'Log out';									#
 use constant S_MANASAVE => 'Remember me on this computer';				# Defines Label for the login cookie checbox
 use constant S_MANASUB => 'Go';											# Defines name for submit button in Manager Mode
 
@@ -64,7 +61,7 @@ use constant S_MPDELETE => 'Delete';									# Defines for deletion button in Ma
 use constant S_MPARCHIVE => 'Archive';
 use constant S_MPRESET => 'Reset';										# Defines name for field reset button in Management Panel
 use constant S_MPONLYPIC => 'File Only';								# Sets whether or not to delete only file, or entire post/thread
-use constant S_MPDELETEALL => 'Del&nbsp;all';							# 
+use constant S_MPDELETEALL => 'Del&nbsp;all';							#
 use constant S_MPBAN => 'Ban';											# Sets whether or not to delete only file, or entire post/thread
 use constant S_MPTABLE => '<th>Post No.</th><th>Time</th><th>Subject</th>'.
                           '<th>Name</th><th>Comment</th><th>IP</th>';	# Explains names for Management Panel
@@ -83,20 +80,7 @@ use constant S_BANCOMMENT => 'Comment';
 use constant S_BANTRUST => 'No captcha';
 use constant S_BANTRUSTTRIP => 'Tripcode';
 
-use constant S_PROXYTABLE => '<th>Type</th><th>IP</th><th>Expires</th><th>Date</th>'; # Explains names for Proxy Panel
-use constant S_PROXYIPLABEL => 'IP';
-use constant S_PROXYTIMELABEL => 'Seconds to live';
-use constant S_PROXYREMOVEBLACK => 'Remove';
-use constant S_PROXYWHITELIST => 'Whitelist';
-use constant S_PROXYDISABLED => 'Proxy detection is currently disabled in configuration.';
 use constant S_BADIP => 'Bad IP value';
-
-use constant S_SPAMEXPL => 'This is the list of domain names Wakaba considers to be spam.<br />'.
-                           'You can find an up-to-date version <a href="http://wakaba.c3.cx/antispam/antispam.pl?action=view&amp;format=wakaba">here</a>, '.
-                           'or you can get the <code>spam.txt</code> file directly <a href="http://wakaba.c3.cx/antispam/spam.txt">here</a>.';
-use constant S_SPAMSUBMIT => 'Save';
-use constant S_SPAMCLEAR => 'Clear';
-use constant S_SPAMRESET => 'Restore';
 
 use constant S_SQLNUKE => 'Nuke password:';
 use constant S_SQLEXECUTE => 'Execute';
@@ -121,7 +105,6 @@ use constant S_BADHOSTPROXY => 'Error: Proxy is banned for being open.';	# Retur
 use constant S_RENZOKU => 'Error: Flood detected, post discarded.';			# Returns error for $sec/post spam filter
 use constant S_RENZOKU2 => 'Error: Flood detected, file discarded.';		# Returns error for $sec/upload spam filter
 use constant S_RENZOKU3 => 'Error: Flood detected.';						# Returns error for $sec/similar posts spam filter.
-use constant S_PROXY => 'Error: Open proxy detected.';						# Returns error for proxy detection.
 use constant S_DUPE => 'Error: This file has already been posted <a href="%s">here</a>.';	# Returns error when an md5 checksum already exists.
 use constant S_DUPENAME => 'Error: A file with the same name already exists.';	# Returns error when an filename already exists.
 use constant S_NOTHREADERR => 'Error: Thread does not exist.';				# Returns error when a non-existant thread is accessed
@@ -131,10 +114,11 @@ use constant S_VIRUS => 'Error: Possible virus-infected file.';				# Returns err
 use constant S_NOTWRITE => 'Error: Could not write to directory.';				# Returns error when the script cannot write to the directory, the chmod (777) is wrong
 use constant S_SPAM => 'Spammers are not welcome here.';					# Returns error when detecting spam
 
+use constant S_AUTOBAN => 'Spambot [Auto Ban]'; # Ban reason for automatically created bans
+
 use constant S_SQLCONF => 'SQL connection failure';							# Database connection failure
 use constant S_SQLFAIL => 'Critical SQL problem!';							# SQL Failure
 
 use constant S_REDIR => 'If the redirect didn\'t work, please choose one of the following mirrors:';    # Redir message for html in REDIR_DIR
 
 1;
-

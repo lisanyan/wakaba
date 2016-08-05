@@ -678,16 +678,6 @@ sub get_xhtml_content_type(;$$)
 	return $type;
 }
 
-sub expand_filename($)
-{
-	my ($filename)=@_;
-	return $filename if($filename=~m!^/!);
-	return $filename if($filename=~m!^\w+:!);
-
-	my ($self_path)=$ENV{SCRIPT_NAME}=~m!^(.*/)[^/]+$!;
-	return $self_path.$filename;
-}
-
 #
 # Network utilities
 #
@@ -712,7 +702,7 @@ sub process_tripcode($;$$$$)
 	{
 		my ($namepart,$marker,$trippart)=($1,$2,$3);
 		my $trip;
-	
+
 		$namepart=decode_string($namepart,$charset) unless $nonamedecoding;
 		$namepart=clean_string($namepart);
 
@@ -737,7 +727,7 @@ sub process_tripcode($;$$$$)
 		$trippart=clean_string($trippart);
 		my $salt=substr $trippart."H..",1,2;
 		$salt=~s/[^\.-z]/./g;
-		$salt=~tr/:;<=>?@[\\]^_`/ABCDEFGabcdef/; 
+		$salt=~tr/:;<=>?@[\\]^_`/ABCDEFGabcdef/;
 		$trip=$tripkey.(substr crypt($trippart,$salt),-10).$trip;
 
 		return ($namepart,$trip);
@@ -1014,80 +1004,6 @@ sub write_array($@)
 	}
 }
 
-
-
-#
-# Spam utilities
-#
-
-sub spam_check($$) # Deprecated function
-{
-	my ($text,$spamfile)=@_;
-	return compile_spam_checker($spamfile)->($text);
-}
-
-sub compile_spam_checker(@)
-{
-	my @re=map {
-		s{(\\?\\?&\\?#([0-9]+)\\?;|\\?&\\?#x([0-9a-f]+)\\?;)}{
-			sprintf("\\x{%x}",($2 or hex $3));
-		}gei if $has_encode;
-		$_;
-	} map {
-		s/(^|\s+)#.*//; s/^\s+//; s/\s+$//; # strip perl-style comments and whitespace
-		if(!length) { () } # nothing left, skip
-		elsif(m!^/(.*)/$!) { $1 } # a regular expression
-		elsif(m!^/(.*)/([xism]+)$!) { "(?$2)$1" } # a regular expression with xism modifiers
-		else { quotemeta } # a normal string
-	} map read_array($_),@_;
-
-	return eval 'sub {
-		$_=shift;
-		# study; # causes a strange bug - moved to spam_engine()
-		return '.(join "||",map "/$_/mo",(@re)).';
-	}';
-}
-
-sub spam_engine(%)
-{
-	my %args=@_;
-	my @spam_files=@{$args{spam_files}||[]};
-	my @trap_fields=@{$args{trap_fields}||[]};
-	my @included_fields=@{$args{included_fields}||[]};
-	my %excluded_fields=map ($_=>1),@{$args{excluded_fields}||[]};
-	my $query=$args{query}||new CGI;
-	my $charset=$args{charset};
-
-	for(@trap_fields) { spam_screen($query) if $query->param($_) }
-
-	my $spam_checker=compile_spam_checker(@spam_files);
-	my @fields=@included_fields?@included_fields:$query->param;
-	@fields=grep !$excluded_fields{$_},@fields if %excluded_fields;
-#	my $fulltext=join "\n",map decode_string($query->param($_),$charset),@fields;
-	my $fulltext=join "\n",map $query->param($_),@fields;
-	study $fulltext;
-
-	spam_screen($query) if $spam_checker->($fulltext);
-}
-
-sub spam_screen($)
-{
-	my $query=shift;
-
-	print "Content-Type: text/html\n\n";
-	print "<html><body>";
-	print "<h1>Anti-spam filters triggered.</h1>";
-	print "<p>If you are not a spammer, you are probably accidentially ";
-	print "trying to use an URL that is listed in the spam file. Try ";
-	print "editing your post to remove it. Sorry for any inconvenience.</p>";
-	print "<small style='color:white'><small>";
-	print "$_<br>" for(map $query->param($_),$query->param);
-	print "</small></small>";
-
-	exit 0;
-}
-
-
 #
 # Image utilities
 #
@@ -1141,7 +1057,7 @@ sub analyze_jpeg($)
 			last if($mark==0xda or $mark==0xd9);  # SOS/EOI
 			die "Possible virus in image" if($size<2); # MS GDI+ JPEG exploit uses short chunks
 
-			if($mark>=0xc0 and $mark<=0xc2) # SOF0..SOF2 - what the hell are the rest? 
+			if($mark>=0xc0 and $mark<=0xc2) # SOF0..SOF2 - what the hell are the rest?
 			{
 				last unless(read($file,$buffer,5)==5);
 				my ($bits,$height,$width)=unpack("Cnn",$buffer);
@@ -1198,10 +1114,11 @@ sub make_thumbnail($$$$$;$)
 	# first try ImageMagick
 
 	my $magickname=$filename;
+	my $method=($magickname=~/\.gif$/)?"-coalesce -sample":"-resize";
 	$magickname.="[0]" if($magickname=~/\.gif$/);
 
 	$convert="convert" unless($convert);
-	`$convert -background white -flatten -size ${width}x${height} -geometry ${width}x${height}! -quality $quality $magickname $thumbnail`;
+	`$convert $magickname $method ${width}x${height}! -quality $quality $thumbnail`;
 
 	return 1 unless($?);
 
@@ -1342,7 +1259,7 @@ sub setup_rc6($)
 		$A=$S[$i]=rol(add($S[$i],$A,$B),3);
 		$B=$L[$j]=rol(add($L[$j]+$A+$B),add($A+$B));
 		$i=($i+1)%@S;
-		$j=($j+1)%@L;	
+		$j=($j+1)%@L;
 	}
 }
 
@@ -1366,7 +1283,7 @@ sub encrypt_rc6($)
 
 	$A=add($A,$S[42]);
 	$C=add($C,$S[43]);
-		
+
 	return pack "V4",$A,$B,$C,$D;
 }
 
@@ -1390,7 +1307,7 @@ sub decrypt_rc6($)
 
 	$D=add32($D,-$S[1]);
 	$B=add32($B,-$S[0]);
-		
+
 	return pack "V4",$A,$B,$C,$D;
 }
 

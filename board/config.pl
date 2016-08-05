@@ -1,37 +1,28 @@
-# use encoding 'shift-jis'; # Uncomment this to use shift-jis in strings. ALSO uncomment the "no encoding" at the end of the file!
+use encoding 'utf8'; # Uncomment this to use shift-jis in strings. ALSO uncomment the "no encoding" at the end of the file!
 
 #
 # Example config file.
-# 
+#
 # Uncomment and edit the options you want to specifically change from the
 # default values. You must specify ADMIN_PASS, NUKE_PASS, SECRET and the
 # SQL_ options.
 #
 
 # System config
-#use constant ADMIN_PASS => 'CHANGEME';			# Admin password. For fucks's sake, change this.
-#use constant NUKE_PASS => 'CHANGEME';			# Password to nuke a board. Change this too, NOW!
-#use constant SECRET => 'CHANGEME';				# Cryptographic secret. CHANGE THIS to something totally random, and long.
-#use constant SQL_DBI_SOURCE => 'DBI:mysql:database=CHANGEME;host=localhost'; # DBI data source string (mysql version, put server and database name in here)
-#use constant SQL_USERNAME => 'CHANGEME';		# MySQL login name
-#use constant SQL_PASSWORD => 'CHANGEME';		# MySQL password
-##use constant SQL_DBI_SOURCE => 'dbi:SQLite:dbname=wakaba.sql';		# DBI data source string (SQLite version, put database filename in here)
-##use constant SQL_USERNAME => '';				# Not used by SQLite
-##use constant SQL_PASSWORD => '';				# Not used by SQLite
-#use constant SQL_TABLE => 'comments';			# Table (NOT DATABASE) used by image board
+use constant SQL_TABLE => 'board_comments';			# Table (NOT DATABASE) used by image board
 #use constant SQL_ADMIN_TABLE => 'admin';		# Table used for admin information
 #use constant SQL_PROXY_TABLE => 'proxy';		# Table used for proxy information
 #use constant USE_TEMPFILES => 1;				# Set this to 1 under Unix and 0 under Windows! (Use tempfiles when creating pages)
 
 # Page look
-#use constant TITLE => 'Wakaba image board';	# Name of this image board
+use constant TITLE => 'Wakaba image board';	# Name of this image board
 #use constant SHOWTITLETXT => 1;				# Show TITLE at top (1: yes  0: no)
 #use constant SHOWTITLEIMG => 0;				# Show image at top (0: no, 1: single, 2: rotating)
 #use constant TITLEIMG => 'title.jpg';			# Title image (point to a script file if rotating)
 #use constant FAVICON => 'wakaba.ico';			# Favicon.ico file
-#use constant HOME => '../';					# Site home directory (up one level by default
+use constant HOME => '../';					# Site home directory (up one level by default
 #use constant IMAGES_PER_PAGE => 10;			# Images per page
-#use constant REPLIES_PER_THREAD => 10;			# Replies shown
+use constant REPLIES_PER_THREAD => 4;			# Replies shown
 #use constant IMAGE_REPLIES_PER_THREAD => 0;	# Number of image replies per thread to show, set to 0 for no limit.
 #use constant S_ANONAME => 'Anonymous';			# Defines what to print if there is no text entered in the name field
 #use constant S_ANOTEXT => '';					# Defines what to print if there is no text entered in the comment field
@@ -40,7 +31,7 @@
 #use constant DEFAULT_STYLE => 'Futaba';		# Title of the default style for the board.
 
 # Limitations
-#use constant MAX_KB => 1000;					# Maximum upload size in KB
+use constant MAX_KB => 3072;					# Maximum upload size in KB
 #use constant MAX_W => 200;						# Images exceeding this width will be thumbnailed
 #use constant MAX_H => 200;						# Images exceeding this height will be thumbnailed
 #use constant MAX_RES => 20;					# Maximum topic bumps
@@ -72,12 +63,6 @@
 #use constant LOAD_LOCAL => 120;				# Gigabytes of available bandwidth relative to other hosts (please read documentation)
 #use constant LOAD_HOSTS => (['http://somesite/loader.pl', 'password', 100]);
 #use constant LOAD_KBRATE => 25;				# minimum send rate that will be accepted without timing out
-
-# Proxy
-#use constant ENABLE_PROXY_CHECK => 0;			# Enable proxy checking (0: no, 1:yes). Please read the documentation first!
-#use constant PROXY_COMMAND => 'proxycheck -s -d CHANGEME -c chat:CHANGEME ESMTP" -aaaa';	# Only uncomment if you know what you're doing... 
-#use constant PROXY_WHITE_AGE => 604800;		# Seconds until confirmed non-proxy entry expires.
-#use constant PROXY_BLACK_AGE => 604800;		# Seconds until confirmed proxy entry expires.
 
 # Tweaks
 #use constant THUMBNAIL_SMALL => 1;				# Thumbnail small images (1: yes, 0: no)
@@ -115,7 +100,6 @@
 #use constant ALTERNATE_REDIRECT => 0;			# Use alternate redirect method. (Javascript/meta-refresh instead of HTTP forwards. Needed to run on certain servers, like IIS.)
 #use constant COOKIE_PATH => 'root';			# Path argument for cookies ('root': cookies apply to all boards on the site, 'current': cookies apply only to this board, 'parent': cookies apply to all boards in the parent directory)
 #use constant FORCED_ANON => 0;					# Force anonymous posting (0: no, 1: yes)
-#use constant USE_XHTML => 1;					# Send pages as application/xhtml+xml to browsers that support this (0:no, 1:yes)
 #use constant SPAM_TRAP => 1;					# Enable the spam trap (empty, hidden form fields that spam bots usually fill out) (0:no, 1:yes)
 
 # Internal paths and files - might as well leave this alone.
@@ -171,6 +155,6 @@
 #	png => '.',
 #);
 
-# no encoding; # Uncomment this if you uncommented the "use encoding" at the top of the file
+no encoding; # Uncomment this if you uncommented the "use encoding" at the top of the file
 
 1;
