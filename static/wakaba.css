@@ -11,3 +11,8 @@ form .trap { display:none }
 /*.reply */.filesize { margin-left: 20px }
 .userdelete { float: right; text-align: center; white-space: nowrap }
 .replypage .replylink { display: none }
+/* new */
+.locked { font-weight:bold;font-size:1.2em }
+.spoiler { background-color: #000; color: #000; text-shadow:none }
+.spoiler a { color: #000 }
+.spoiler:hover, .spoiler a:hover { color: #fff }

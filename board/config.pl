@@ -10,9 +10,7 @@ use encoding 'utf8'; # Uncomment this to use shift-jis in strings. ALSO uncommen
 
 # System config
 use constant SQL_TABLE => 'board_comments';			# Table (NOT DATABASE) used by image board
-#use constant SQL_ADMIN_TABLE => 'admin';		# Table used for admin information
-#use constant SQL_PROXY_TABLE => 'proxy';		# Table used for proxy information
-#use constant USE_TEMPFILES => 1;				# Set this to 1 under Unix and 0 under Windows! (Use tempfiles when creating pages)
+use constant BOARD_IDENT => 'board';
 
 # Page look
 use constant TITLE => 'Wakaba image board';	# Name of this image board
@@ -20,9 +18,9 @@ use constant TITLE => 'Wakaba image board';	# Name of this image board
 #use constant SHOWTITLEIMG => 0;				# Show image at top (0: no, 1: single, 2: rotating)
 #use constant TITLEIMG => 'title.jpg';			# Title image (point to a script file if rotating)
 #use constant FAVICON => 'wakaba.ico';			# Favicon.ico file
-use constant HOME => '../';					# Site home directory (up one level by default
+#use constant HOME => '../';					# Site home directory (up one level by default
 #use constant IMAGES_PER_PAGE => 10;			# Images per page
-use constant REPLIES_PER_THREAD => 4;			# Replies shown
+#use constant REPLIES_PER_THREAD => 4;			# Replies shown
 #use constant IMAGE_REPLIES_PER_THREAD => 0;	# Number of image replies per thread to show, set to 0 for no limit.
 #use constant S_ANONAME => 'Anonymous';			# Defines what to print if there is no text entered in the name field
 #use constant S_ANOTEXT => '';					# Defines what to print if there is no text entered in the comment field
@@ -56,6 +54,11 @@ use constant MAX_KB => 3072;					# Maximum upload size in KB
 #use constant CAPTCHA_SCALING => 0.15;
 #use constant CAPTCHA_ROTATION => 0.3;
 #use constant CAPTCHA_SPACING => 2.5;
+
+# Reports
+#use constant ENABLE_REPORTS => 1;
+#use constant REPORTS_MAX => 5;
+#use constant REPORTS_REASONLENGTH => 120;
 
 # Load Balancing
 #use constant ENABLE_LOAD => 0;					# Enable the distribution of image files across multiple hosts (0: no, 1: yes). May not work on a windows host. Do not enable if using STUPID_THUMBNAILING.
@@ -111,13 +114,6 @@ use constant MAX_KB => 3072;					# Maximum upload size in KB
 #use constant HTML_SELF => 'wakaba.html';		# Name of main html file
 #use constant JS_FILE => 'wakaba.js';			# Location of the js file
 #use constant PAGE_EXT => '.html';				# Extension used for board pages after first
-#use constant ERRORLOG => '';					# Writes out all errors seen by user, mainly useful for debugging
-#use constant CONVERT_COMMAND => 'convert';		# location of the ImageMagick convert command (usually just 'convert', but sometime a full path is needed)
-##use constant CONVERT_COMMAND => '/usr/X11R6/bin/convert';
-#use constant SPAM_FILES => ('spam.txt');		# Spam definition files, as a Perl list.
-												# Hints: * Set all boards to use the same file for easy updating.
-												#        * Set up two files, one being the official list from
-												#          http://wakaba.c3.cx/antispam/spam.txt, and one your own additions.
 
 # Icons for filetypes - file extensions specified here will not be renamed, and will get icons
 # (except for the built-in image formats). These example icons can be found in the extras/ directory.

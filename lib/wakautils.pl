@@ -4,6 +4,8 @@ use strict;
 
 use Time::Local;
 use Socket;
+use IO::Socket::INET;
+use Net::IP qw(:PROC); # IPv6 conversions
 
 my $has_md5=0;
 eval 'use Digest::MD5 qw(md5)';
@@ -127,6 +129,7 @@ sub sanitize_html($%)
 
 								if($type=~/url/i) { $passes=0 unless $value=~/(?:^${protocol_re}|^[^:]+$)/ }
 								if($type=~/number/i) { $passes=0 unless $value=~/^[0-9]+$/  }
+								if($type=~/color/i) { $passes=0 unless $value=~/^#[0-9A-Fa-f]{6}$/ }
 
 								if($passes)
 								{
@@ -247,16 +250,22 @@ sub do_spans($@)
 		# do <strong>
 		$line=~s{ (?<![0-9a-zA-Z\*_\x80-\x9f\xe0-\xfc]) (\*\*|__) (?![<>\s\*_]) ([^<>]+?) (?<![<>\s\*_\x80-\x9f\xe0-\xfc]) \1 (?![0-9a-zA-Z\*_]) }{<strong>$2</strong>}gx;
 
+		# do spoiler
+		$line=~s{ (?<![0-9a-zA-Z\*_\x80-\x9f\xe0-\xfc]) (\%\%|~~) (?![<>\s\*_]) ([^<>]+?) (?<![<>\s\*_\x80-\x9f\xe0-\xfc]) \1 (?![0-9a-zA-Z\*_]) }{<span class="spoiler">$2</span>}gx;
+
+		# do strike
+		$line=~s{ (?<![0-9a-zA-Z\*_\x80-\x9f\xe0-\xfc]) (\^\^) (?![<>\s\*_]) ([^<>]+?) (?<![<>\s\*_\x80-\x9f\xe0-\xfc]) \1 (?![0-9a-zA-Z\*_]) }{<del>$2</del>}gx;
+
 		# do <em>
 		$line=~s{ (?<![0-9a-zA-Z\*_\x80-\x9f\xe0-\xfc]) (\*|_) (?![<>\s\*_]) ([^<>]+?) (?<![<>\s\*_\x80-\x9f\xe0-\xfc]) \1 (?![0-9a-zA-Z\*_]) }{<em>$2</em>}gx;
 
 		# do ^H
-		if($]>5.007)
-		{
-			my $regexp;
-			$regexp=qr/(?:&#?[0-9a-zA-Z]+;|[^&<>])(?<!\^H)(??{$regexp})?\^H/;
-			$line=~s{($regexp)}{"<del>".(substr $1,0,(length $1)/3)."</del>"}gex;
-		}
+		# if($]>5.007)
+		# {
+		# 	my $regexp;
+		# 	$regexp=qr/(?:&#?[0-9a-zA-Z]+;|[^&<>])(?<!\^H)(??{$regexp})?\^H/;
+		# 	$line=~s{($regexp)}{"<del>".(substr $1,0,(length $1)/3)."</del>"}gex;
+		# }
 
 		$line=$handler->($line) if($handler);
 
@@ -279,7 +288,7 @@ sub compile_template($;$)
 		$str=~s/\n\s*/ /sg;
 	}
 
-	while($str=~m!(.*?)(<(/?)(var|const|if|loop)(?:|\s+(.*?[^\\]))>|$)!sg)
+	while($str=~m!(.*?)(<(/?)(var|const|if|elsif|else|loop)(?:|\s+(.*?[^\\]))>|$)!sg)
 	{
 		my ($html,$tag,$closing,$name,$args)=($1,$2,$3,$4,$5);
 
@@ -299,6 +308,8 @@ sub compile_template($;$)
 				if($name eq 'var') { $code.='$res.=eval{'.$args.'};' }
 				elsif($name eq 'const') { my $const=eval $args; $const=~s/(['\\])/\\$1/g; $code.='$res.=\''.$const.'\';' }
 				elsif($name eq 'if') { $code.='if(eval{'.$args.'}){' }
+				elsif($name eq 'elsif') { $code.='}elsif(eval{'.$args.'}){' }
+				elsif($name eq 'else') { $code.='}else{' }
 				elsif($name eq 'loop')
 				{ $code.='my $__a=eval{'.$args.'};if($__a){for(@$__a){my %__v=%{$_};my %__ov;for(keys %__v){$__ov{$_}=$$_;$$_=$__v{$_};}' }
 			}
@@ -487,13 +498,13 @@ sub js_hash(%)
 use constant CACHEFILE_PREFIX => 'cache-'; # you can make this a directory (e.g. 'cachedir/cache-' ) if you'd like
 use constant FORCETIME => '0.04'; 	# If the cache is less than (FORCETIME) days old, don't even attempt to refresh.
                                     # Saves everyone some bandwidth. 0.04 days is ~ 1 hour. 0.0007 days is ~ 1 min.
-eval 'use IO::Socket::INET'; # Will fail on old Perl versions!
+# eval 'use IO::Socket::INET'; # Will fail on old Perl versions!
 
 sub get_http($;$$$)
 {
 	my ($url,$maxsize,$referer,$cacheprefix)=@_;
-	my ($host,$port,$doc)=$url=~m!^(?:http://|)([^/]+)(:[0-9]+|)(.*)$!;
-	$port=80 unless($port);
+	my ($ssl,$host,$port,$doc)=$url=~m!^(?:http(s?)://|)([^/]+)(:[0-9]+|)(.*)$!;
+	$port=$port?$port:$ssl?443:80;
 
 	my $hash=encode_base64(rc4(null_string(6),"$host:$port$doc",0),"");
 	$hash=~tr!/+!_-!; # remove / and +
@@ -510,18 +521,28 @@ sub get_http($;$$$)
 		return $cache if((-M $cachefile)<FORCETIME);
 	}
 
-	my $sock=IO::Socket::INET->new("$host:$port") or return $cache;
+	my $sock;
+
+	if($ssl)
+	{
+		eval 'use IO::Socket::SSL';
+		return $cache if $@;
+		$sock=IO::Socket::SSL->new("$host:$port") or return $cache;
+	}
+	else { $sock=IO::Socket::INET->new("$host:$port") or return $cache; }
+
 	print $sock "GET $doc HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n";
 	print $sock "If-Modified-Since: $modified\r\n" if $modified;
 	print $sock "Referer: $referer\r\n" if $referer;
 	print $sock "\r\n"; #finished!
 
 	# header
-	my ($line,$statuscode,$lastmod);
+	my ($line,$statuscode,$lastmod,$chunked);
 	do {
 		$line=<$sock>;
 		$statuscode=$1 if($line=~/^HTTP\/1\.1 (\d+)/);
 		$lastmod=$1 if($line=~/^Last-Modified: (.*)/);
+		$chunked=1 if($line=~/^Transfer-Encoding: chunked/)
 	} until ($line=~/^\r?\n/);
 
 	# body
@@ -535,6 +556,9 @@ sub get_http($;$$$)
 
 	if($statuscode=="200")
 	{
+		# fix chunked transfers
+		$output=handle_chunked_transfer($output) if($chunked);
+
 		#navbar changed, update cache
 		if(open CACHE,">$cachefile")
 		{
@@ -551,27 +575,34 @@ sub get_http($;$$$)
 	}
 }
 
-sub make_http_forward($;$)
+sub handle_chunked_transfer($)
 {
-	my ($location,$alternate_method)=@_;
+	my @lines=split /^/, shift;
+	my ($data);
 
-	if($alternate_method)
+	while(defined(my $line=shift @lines))
 	{
-		print "Content-Type: text/html\n";
-		print "\n";
-		print "<html><head>";
-		print '<meta http-equiv="refresh" content="0; url='.$location.'" />';
-		print '<script type="text/javascript">document.location="'.$location.'";</script>';
-		print '</head><body><a href="'.$location.'">'.$location.'</a></body></html>';
+		my $length=hex $line;
+		while($length>0 and defined($line=shift @lines))
+		{
+			$line=substr($line,0,$length);
+			$data.=$line;
+			$length-=length $line;
+		}
 	}
-	else
-	{
-		print "Status: 303 Go West\n";
-		print "Location: $location\n";
-		print "Content-Type: text/html\n";
-		print "\n";
-		print '<html><body><a href="'.$location.'">'.$location.'</a></body></html>';
-	}
+
+	return $data;
+}
+
+sub make_http_forward($)
+{
+    my ($location) = @_;
+
+    print "Status: 303 Go West\n";
+    print "Location: $location\n";
+    print "Content-Type: text/html\n";
+    print "\n";
+    print '<html><body><a href="'.$location.'">'.$location.'</a></body></html>';
 }
 
 sub make_cookies(%)
@@ -688,6 +719,10 @@ sub resolve_host($)
 	return (gethostbyaddr inet_aton($ip),AF_INET or $ip);
 }
 
+sub get_remote_addr()
+{
+    return ($ENV{HTTP_CF_CONNECTING_IP} || $ENV{HTTP_X_REAL_IP} || $ENV{REMOTE_ADDR});
+}
 
 #
 # Data utilities
@@ -849,56 +884,82 @@ sub decode_base64($) # stolen from MIME::Base64::Perl
 	return unpack "u",join '',map { chr(32+length($_)*3/4).$_ } $str=~/(.{1,60})/gs;
 }
 
-sub dot_to_dec($)
+sub dot_to_dec
 {
-	return unpack('N',pack('C4',split(/\./, $_[0]))); # wow, magic.
-}
+	my $ip = $_[0];
 
-sub dec_to_dot($)
-{
-	return join('.',unpack('C4',pack('N',$_[0])));
-}
-
-sub mask_ip($$;$)
-{
-	my ($ip,$key,$algorithm)=@_;
-
-	$ip=dot_to_dec($ip) if $ip=~/\./;
-
-	my ($block,$stir)=setup_masking($key,$algorithm);
-	my $mask=0x80000000;
-
-	for(1..32)
-	{
-		my $bit=$ip&$mask?"1":"0";
-		$block=$stir->($block);
-		$ip^=$mask if(ord($block)&0x80);
-		$block=$bit.$block;
-		$mask>>=1;
+	if ($ip =~ /:/) { # IPv6
+		my $iph=new Net::IP($ip) or return 0;
+		return $iph->intip();
 	}
 
-	return sprintf "%08x",$ip;
+	# IPv4
+    return unpack( 'N', pack( 'C4', split( /\./, $ip ) ) );    # wow, magic.
 }
 
-sub unmask_ip($$;$)
+sub dec_to_dot
 {
-	my ($id,$key,$algorithm)=@_;
+	my $ip = $_[0];
 
-	$id=hex($id);
+	return ip_compress_address(ip_bintoip(ip_inttobin($ip, 6), 6), 6) if (length(pack('w', $ip)) > 5); # IPv6
+    return join('.', unpack('C4', pack('N', $ip))); # IPv4
+}
 
-	my ($block,$stir)=setup_masking($key,$algorithm);
-	my $mask=0x80000000;
+sub mask_ip
+{
+    my ( $ip, $key, $algorithm ) = @_;
 
-	for(1..32)
-	{
-		$block=$stir->($block);
-		$id^=$mask if(ord($block)&0x80);
-		my $bit=$id&$mask?"1":"0";
-		$block=$bit.$block;
-		$mask>>=1;
-	}
+    $ip = dot_to_dec($ip) if $ip =~ /\.|:/;
 
-	return dec_to_dot($id);
+    my ( $block, $stir ) = setup_masking( $key, $algorithm );
+    my $mask = 0x80000000;
+
+    for ( 1 .. 32 ) {
+        my $bit = $ip & $mask ? "1" : "0";
+        $block = $stir->($block);
+        $ip ^= $mask if ( ord($block) & 0x80 );
+        $block = $bit . $block;
+        $mask >>= 1;
+    }
+
+    return sprintf "%08x", $ip;
+}
+
+sub unmask_ip
+{
+    my ( $id, $key, $algorithm ) = @_;
+
+    $id = hex($id);
+
+    my ( $block, $stir ) = setup_masking( $key, $algorithm );
+    my $mask = 0x80000000;
+
+    for ( 1 .. 32 ) {
+        $block = $stir->($block);
+        $id ^= $mask if ( ord($block) & 0x80 );
+        my $bit = $id & $mask ? "1" : "0";
+        $block = $bit . $block;
+        $mask >>= 1;
+    }
+
+    return dec_to_dot($id);
+}
+
+sub setup_masking
+{
+    my ( $key, $algorithm ) = @_;
+
+    $algorithm = $has_md5 ? "md5" : "rc6" unless $algorithm;
+
+    my ( $block, $stir );
+
+    if ( $algorithm eq "md5" ) {
+        return ( md5($key), sub { md5(shift) } );
+    }
+    else {
+        setup_rc6($key);
+        return ( null_string(16), sub { encrypt_rc6(shift) } );
+    }
 }
 
 sub setup_masking($$)

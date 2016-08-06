@@ -143,8 +143,11 @@ function set_delpass(id) { with(document.getElementById(id)) password.value=get_
 
 function do_ban(el)
 {
+	var loc = el.href;
 	var reason=prompt("Give a reason for this ban:");
-	if(reason) document.location=el.href+"&comment="+encodeURIComponent(reason);
+	if(reason) loc+="&comment="+encodeURIComponent(reason);
+	var flag=prompt("Flag post? (leave empty for no)");
+	if(flag) document.location=loc+"&flag="+encodeURIComponent(flag);
 	return false;
 }
 

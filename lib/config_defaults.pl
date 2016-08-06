@@ -1,11 +1,11 @@
 use strict;
 
 BEGIN {
-	use constant S_NOADMIN => 'No ADMIN_PASS or NUKE_PASS defined in the configuration';	# Returns error when the config is incomplete
+	# use constant S_NOADMIN => 'No ADMIN_PASS or NUKE_PASS defined in the configuration';	# Returns error when the config is incomplete
 	use constant S_NOSECRET => 'No SECRET defined in the configuration';		# Returns error when the config is incomplete
 	use constant S_NOSQL => 'No SQL settings defined in the configuration';		# Returns error when the config is incomplete
 
-	die S_NOADMIN unless(defined &ADMIN_PASS);
+	# die S_NOADMIN unless(defined &ADMIN_PASS);
 	# die S_NOADMIN unless(defined &NUKE_PASS);
 	die S_NOSECRET unless(defined &SECRET);
 	die S_NOSQL unless(defined &SQL_DBI_SOURCE);
@@ -14,7 +14,7 @@ BEGIN {
 
 	eval "use constant SQL_TABLE => 'comments'" unless(defined &SQL_TABLE);
 	eval "use constant SQL_ADMIN_TABLE => 'admin'" unless(defined &SQL_ADMIN_TABLE);
-	eval "use constant SQL_PROXY_TABLE => 'proxy'" unless(defined &SQL_PROXY_TABLE);
+	eval "use constant SQL_REPORT_TABLE => 'reports'" unless(defined &SQL_REPORT_TABLE);
 
 	eval "use constant USE_TEMPFILES => 1" unless(defined &USE_TEMPFILES);
 
@@ -63,10 +63,15 @@ BEGIN {
 	eval "use constant LOAD_LOCAL => 999" unless(defined &LOAD_LOCAL);
 	eval "use constant LOAD_HOSTS => ()" unless(defined &LOAD_HOSTS);
 
+	eval "use constant ENABLE_REPORTS => 1" unless(defined &ENABLE_REPORTS);
+	eval "use constant REPORTS_MAX => 5" unless(defined &REPORTS_MAX);
+	eval "use constant REPORTS_REASONLENGTH => 120" unless(defined &REPORTS_REASONLENGTH);
+
 	eval "use constant THUMBNAIL_SMALL => 1" unless(defined &THUMBNAIL_SMALL);
 	eval "use constant THUMBNAIL_QUALITY => 70" unless(defined &THUMBNAIL_QUALITY);
 	eval "use constant DELETED_THUMBNAIL => ''" unless(defined &DELETED_THUMBNAIL);
 	eval "use constant DELETED_IMAGE => ''" unless(defined &DELETED_IMAGE);
+	eval "use constant ALLOW_LINK => 0" unless(defined &ALLOW_TEXTONLY);
 	eval "use constant ALLOW_TEXTONLY => 1" unless(defined &ALLOW_TEXTONLY);
 	eval "use constant ALLOW_IMAGES => 1" unless(defined &ALLOW_IMAGES);
 	eval "use constant ALLOW_TEXT_REPLIES => 1" unless(defined &ALLOW_TEXT_REPLIES);
@@ -95,6 +100,10 @@ BEGIN {
 	eval "use constant STYLE_COOKIE => 'wakabastyle'" unless(defined &STYLE_COOKIE);
 	eval "use constant FORCED_ANON => 0" unless(defined &FORCED_ANON);
 	eval "use constant SPAM_TRAP => 1" unless(defined &SPAM_TRAP);
+	eval "use constant PREVENT_GHOST_BUMPING => 1" unless(defined &PREVENT_GHOST_BUMPING);
+
+	eval "use constant BAN_DATES => [{label=>'Never',time=>0},{label=>'3 days',time=>3600*24*3},{label=>'1 week',time=>3600*24*7},".
+	"{label=>'1 month',time=>3600*24*30},{label=>'1 year',time=>3600*24*365}]" unless(defined &BAN_DATES);
 
 	eval "use constant IMG_DIR => 'src/'" unless(defined &IMG_DIR);
 	eval "use constant THUMB_DIR => 'thumb/'" unless(defined &THUMB_DIR);
@@ -103,12 +112,19 @@ BEGIN {
 	eval "use constant REDIR_DIR => 'redir/'" unless (defined &REDIR_DIR);
 	eval "use constant HTML_SELF => 'wakaba.html'" unless(defined &HTML_SELF);
 	eval "use constant JS_FILE => '/static/wakaba3.js'" unless(defined &JS_FILE);
-	eval "use constant CSS_DIR => 'css/'" unless(defined &CSS_DIR);
+	eval "use constant CSS_DIR => 'static/css/'" unless(defined &CSS_DIR);
 	eval "use constant PAGE_EXT => '.html'" unless(defined &PAGE_EXT);
 	eval "use constant ERRORLOG => ''" unless(defined &ERRORLOG);
 	eval "use constant CONVERT_COMMAND => 'convert'" unless(defined &CONVERT_COMMAND);
 
 	eval "use constant FILETYPES => ()" unless(defined &FILETYPES);
+
+	eval "use constant ENABLE_DNSBL_CHECK => 1" unless(defined &ENABLE_DNSBL_CHECK);
+	eval "use constant DNSBL_TIMEOUT => 0.1" unless(defined &DNSBL_TIMEOUT);
+	eval q{use constant DNSBL_INFOS => [
+	    	[ 'tor.dnsbl.sectoor.de', ['127.0.0.1'] ],
+	    	[ 'torexit.dan.me.uk', ['127.0.0.100'] ],
+		]} unless(defined &DNSBL_INFOS);
 
 	eval "use constant WAKABA_VERSION => '3.0.9'" unless(defined &WAKABA_VERSION);
 }
