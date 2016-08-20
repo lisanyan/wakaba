@@ -24,8 +24,9 @@ use constant S_OPTIONS => 'Options';
 use constant S_THUMB => ''; #'Thumbnail displayed, click image for full size.';	# Prints instructions for viewing real source
 use constant S_HIDDEN => 'Thumbnail hidden, click filename for the full image.';	# Prints instructions for viewing hidden image reply
 use constant S_NOTHUMB => 'No<br />thumbnail';								# Printed when there's no thumbnail
-use constant S_PICNAME => 'File: ';											# Prints text before upload name/link
+use constant S_PICNAME => '';											# Prints text before upload name/link
 use constant S_REPLY => 'Reply';											# Prints text for reply link
+use constant S_REPLY => 'View';											# Prints text for reply link
 use constant S_OLD => 'Marked for deletion (old).';							# Prints text to be displayed before post is marked for deletion, see: retention
 use constant S_ABBR => '%d posts omitted. Click Reply to view.';			# Prints text to be shown when replies are hidden
 use constant S_ABBRIMG => '%d posts and %d images omitted. Click Reply to view.';						# Prints text to be shown when replies and images are hidden
@@ -63,6 +64,8 @@ use constant S_MANAREBUILD => 'Rebuild caches';							#
 use constant S_MANALOGOUT => 'Log out';									#
 use constant S_MANASAVE => 'Remember me on this computer';				# Defines Label for the login cookie checbox
 use constant S_MANASUB => 'Go';											# Defines name for submit button in Manager Mode
+use constant S_MANAORPH => 'Orphans';
+use constant S_MANASHOW => 'Show';
 
 use constant S_NOTAGS => 'HTML tags allowed. No formatting will be done, you must use HTML for line breaks and paragraphs.'; # Prints message on Management Board
 use constant S_NOTAGS2 => 'No format.'; # Prints message on Management Board
@@ -89,6 +92,16 @@ use constant S_MPTABLE => '<th>Post No.</th><th>Time</th><th>Subject</th>'.
 use constant S_IMGSPACEUSAGE => '[ Space used: %s ]';				# Prints space used KB by the board under Management Panel
 use constant S_DELALLMSG => 'Affected';
 use constant S_DELALLCOUNT => '%s Posts (%s Threads)';
+use constant S_ALLOWED => 'Allowed file types (Max: %s)';
+
+use constant S_ABBR1 => '1 post ';				# Prints text to be shown when replies are hidden
+use constant S_ABBR2 => '%d posts ';
+use constant S_ABBRIMG1 => 'and 1 file ';		# Prints text to be shown when replies and files are hidden
+use constant S_ABBRIMG2 => 'and %d files ';
+use constant S_ABBR_END => 'hidden.';
+
+use constant S_ABBRTEXT1 => 'One more line';
+use constant S_ABBRTEXT2 => '%d more lines';
 
 use constant S_BANTABLE => '<th>Type</th><th>Date</th><th>Expires</th>'
                             .'<th colspan="2">Value</th><th>Comment</th><th>Action</th>'; # Explains names for Ban Panel
@@ -143,7 +156,11 @@ use constant S_NOTWRITE => 'Could not write to directory.';				# Returns error w
 use constant S_SPAM => 'Spammers are not welcome here.';					# Returns error when detecting spam
 use constant S_LOCKED => 'Thread is closed.';
 use constant S_NOBOARDACC => 'You don\'t have access to this board, accessible: %s<br /><a href="%s?task=logout">Logout</a>';
+
 use constant S_THREADLOCKED => '<strong>Thread %s</strong> is locked. You cannot reply to this thread.';
+use constant S_FILEINFO => 'Information';
+use constant S_FILEDELETED => 'File deleted';
+use constant S_FILENAME => 'File Name:';
 
 use constant S_ICONAUTOSAGE => 'Bumplimit';
 use constant S_ICONLOCKED => 'Closed';

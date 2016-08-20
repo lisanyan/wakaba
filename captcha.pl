@@ -64,6 +64,10 @@ my @background=(0xff,0xff,0xff);
 my $dbh=DBI->connect(SQL_DBI_SOURCE,SQL_USERNAME,SQL_PASSWORD,{AutoCommit=>1}) or die S_SQLCONF;
 init_captcha_database($dbh) unless(table_exists_captcha($dbh,SQL_CAPTCHA_TABLE));
 
+my $kotyatki = $dbh->prepare("SET NAMES 'utf8';") or make_sql_error();
+$kotyatki->execute() or die "SQL: Failed to set names";
+$kotyatki->finish();
+
 my $ip=($ENV{REMOTE_ADDR} or '0.0.0.0');
 my ($word,$timestamp)=get_captcha_word($dbh,$ip,$key,$board);
 

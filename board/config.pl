@@ -10,6 +10,7 @@ use encoding 'utf8'; # Uncomment this to use shift-jis in strings. ALSO uncommen
 
 # System config
 use constant SQL_TABLE => 'board_comments';			# Table (NOT DATABASE) used by image board
+use constant SQL_TABLE_IMG => 'board_img';			# Table (NOT DATABASE) used by image board for images
 use constant BOARD_IDENT => 'board';
 
 # Page look
@@ -22,6 +23,8 @@ use constant TITLE => 'Wakaba image board';	# Name of this image board
 #use constant IMAGES_PER_PAGE => 10;			# Images per page
 #use constant REPLIES_PER_THREAD => 4;			# Replies shown
 #use constant IMAGE_REPLIES_PER_THREAD => 0;	# Number of image replies per thread to show, set to 0 for no limit.
+#use constant REPLIES_PER_LOCKED_THREAD => 1; 	# Replies per locked thread to show
+#use constant IMAGE_REPLIES_PER_LOCKED_THREAD => 0;	# Number of image replies per locked thread to show, set to 0 for no limit.
 #use constant S_ANONAME => 'Anonymous';			# Defines what to print if there is no text entered in the name field
 #use constant S_ANOTEXT => '';					# Defines what to print if there is no text entered in the comment field
 #use constant S_ANOTITLE => '';					# Defines what to print if there is no text entered into subject field
@@ -29,7 +32,8 @@ use constant TITLE => 'Wakaba image board';	# Name of this image board
 #use constant DEFAULT_STYLE => 'Futaba';		# Title of the default style for the board.
 
 # Limitations
-use constant MAX_KB => 3072;					# Maximum upload size in KB
+#use constant MAX_FILES => 4; 					# Maximum number of files
+#use constant MAX_KB => 3072;					# Maximum upload size in KB
 #use constant MAX_W => 200;						# Images exceeding this width will be thumbnailed
 #use constant MAX_H => 200;						# Images exceeding this height will be thumbnailed
 #use constant MAX_RES => 20;					# Maximum topic bumps
@@ -97,6 +101,7 @@ use constant MAX_KB => 3072;					# Maximum upload size in KB
 #use constant DISPLAY_ID => 0;					# Display user IDs (0: never, 1: if no email, 2:always)
 #use constant EMAIL_ID => 'Heaven';				# ID string to use when DISPLAY_ID is 1 and the user uses an email.
 #use constant TRIPKEY => '!';					# this character is displayed before tripcodes
+#use constant DECIMAL_MARK => ','; 				# mark for file sizes
 #use constant ENABLE_WAKABAMARK => 1;			# Enable WakabaMark formatting. (0: no, 1: yes)
 #use constant APPROX_LINE_LENGTH => 150;		# Approximate line length used by reply abbreviation code to guess at the length of a reply.
 #use constant STUPID_THUMBNAILING => 0;			# Bypass thumbnailing code and just use HTML to resize the image. STUPID, wastes bandwidth. (1: enable, 0: disable)
@@ -104,6 +109,7 @@ use constant MAX_KB => 3072;					# Maximum upload size in KB
 #use constant COOKIE_PATH => 'root';			# Path argument for cookies ('root': cookies apply to all boards on the site, 'current': cookies apply only to this board, 'parent': cookies apply to all boards in the parent directory)
 #use constant FORCED_ANON => 0;					# Force anonymous posting (0: no, 1: yes)
 #use constant SPAM_TRAP => 1;					# Enable the spam trap (empty, hidden form fields that spam bots usually fill out) (0:no, 1:yes)
+#use constant ENABLE_AFMOD => 1;				# April fools' day
 
 # Internal paths and files - might as well leave this alone.
 #use constant IMG_DIR => 'src/';				# Image directory (needs to be writeable by the script)
@@ -117,39 +123,44 @@ use constant MAX_KB => 3072;					# Maximum upload size in KB
 
 # Icons for filetypes - file extensions specified here will not be renamed, and will get icons
 # (except for the built-in image formats). These example icons can be found in the extras/ directory.
-#use constant FILETYPES => (
-#   # Audio files
-#	mp3 => 'icons/audio-mp3.png',
-#	ogg => 'icons/audio-ogg.png',
-#	aac => 'icons/audio-aac.png',
-#	m4a => 'icons/audio-aac.png',
-#	mpc => 'icons/audio-mpc.png',
-#	mpp => 'icons/audio-mpp.png',
-#	mod => 'icons/audio-mod.png',
-#	it => 'icons/audio-it.png',
-#	xm => 'icons/audio-xm.png',
-#	fla => 'icons/audio-flac.png',
-#	flac => 'icons/audio-flac.png',
-#	sid => 'icons/audio-sid.png',
-#	mo3 => 'icons/audio-mo3.png',
-#	spc => 'icons/audio-spc.png',
-#	nsf => 'icons/audio-nsf.png',
-#	# Archive files
-#	zip => 'icons/archive-zip.png',
-#	rar => 'icons/archive-rar.png',
-#	lzh => 'icons/archive-lzh.png',
-#	lha => 'icons/archive-lzh.png',
-#	gz => 'icons/archive-gz.png',
-#	bz2 => 'icons/archive-bz2.png',
-#	'7z' => 'icons/archive-7z.png',
-#	# Other files
-#	swf => 'icons/flash.png',
-#	torrent => 'icons/torrent.png',
-#	# To stop Wakaba from renaming image files, put their names in here like this:
-#	gif => '.',
-#	jpg => '.',
-#	png => '.',
-#);
+use constant FILETYPES => (
+	# Audio files
+	mp3 => 'audio',
+	ogg => 'audio',
+	# aac => 'audio',
+	# m4a => 'audio',
+	# mpc => 'audio',
+	# mpp => 'audio',
+	# mod => 'audio',
+	# it => 'audio',
+	# xm => 'audio',
+	# fla => 'audio',
+	# flac => 'audio',
+	# sid => 'audio',
+	# mo3 => 'audio',
+	# spc => 'audio',
+	# nsf => 'audio',
+	#Archive files
+	zip => 'archive',
+	rar => 'archive',
+	# lzh => 'archive',
+	# lha => 'archive',
+	# gz => 'archive',
+	# bz2 => 'archive',
+	'7z' => 'archive',
+	# Other files
+	# swf => 'other',
+	torrent => 'other',
+	# Images
+	bmp => 'image',
+	psd => 'image',
+);
+
+# override MAX_KB for specific file types
+use constant FILESIZES => (
+	webm => 10240,
+	mp4 => 10240,
+);
 
 no encoding; # Uncomment this if you uncommented the "use encoding" at the top of the file
 

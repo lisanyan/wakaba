@@ -1,0 +1,4 @@
+# magic to add empty directories to git, feel free to delete these .gitignore
+*
+!.gitignore
+

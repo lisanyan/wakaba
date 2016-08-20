@@ -126,7 +126,7 @@ div.rules {
 .reply blockquote, blockquote :last-child {
 	margin-bottom: .8em;
 }
-.reply>br {
+.reply blockquote>br {
 	display: none;
 }
 #delform input[type="checkbox"] {

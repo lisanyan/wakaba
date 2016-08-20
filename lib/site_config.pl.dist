@@ -13,6 +13,17 @@ use constant DEFAULT_BOARD => 'b';	# default board to redirect to from /
 #use constant CONVERT_COMMAND => 'convert';		# location of the ImageMagick convert command (usually just 'convert', but sometime a full path is needed)
 ##use constant CONVERT_COMMAND => '/usr/X11R6/bin/convert';
 
+use constant FILEGROUPS => (
+	image => 'Images',
+	video => 'Videos',
+	archive => 'Archive',
+	audio => 'Audio',
+	doc => 'Documents',
+	other => 'Other',
+);
+
+use constant GROUPORDER => 'image video archive audio doc other'; # other has to be last
+
 use constant ENABLE_DNSBL_CHECK => 1;
 use constant DNSBL_TIMEOUT => 0.1;
 use constant DNSBL_INFOS => [

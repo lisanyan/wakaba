@@ -6,6 +6,7 @@ use Time::Local;
 use Socket;
 use IO::Socket::INET;
 use Net::IP qw(:PROC); # IPv6 conversions
+use Image::ExifTool; # Meta info
 
 my $has_md5=0;
 eval 'use Digest::MD5 qw(md5)';
@@ -19,6 +20,138 @@ $has_encode=1 unless $@;
 use constant MAX_UNICODE => 1114111;
 
 #
+# File meta
+#
+
+sub get_meta {
+	my ($file, $charset, @tagList) = @_;
+	my (%data, $exifData);
+	my $exifTool = new Image::ExifTool;
+	@tagList = qw(-Directory -FileName -FileAccessDate -FileCreateDate -FileModifyDate -FilePermissions -Warning -ExifToolVersion) unless (@tagList);
+	$exifData = $exifTool->ImageInfo($file, \@tagList) if ($file);
+	foreach (keys %$exifData) {
+		my $val = $$exifData{$_};
+		if (ref $val eq 'ARRAY') {
+			$val = join(', ', @$val);
+		} elsif (ref $val eq 'SCALAR') {
+			my $len = length($$val);
+			$val = "(Binary data; $len bytes)";
+		}
+		if ($val) {
+			$val = substr($val, 0, 190) . '...' if (length($val) > 200);
+			$data{$_} = clean_string(decode_string($val, $charset));
+		}
+	}
+
+	return \%data;
+}
+
+sub get_meta_markup {
+	my ($file, $charset) = @_;
+	my ($exifData, $info, $archive, $markup, @metaOptions);
+	my %options = (	"FileSize" => "File size",
+			"FileType" => "File type",
+			"ImageSize" => "Image size",
+			"ModifyDate" => "Modify date",
+			"Comment" => "Comment",
+			"Comment-xxx" => "Comment (2)",
+			"CreatorTool" => "Creator tool",
+			"Software" => "Software",
+			"MIMEType" => "MIME",
+			"Producer" => "Software",
+			"Creator" => "Generator",
+			"Author" => "Author",
+			"Subject" => "Subject",
+			"PDFVersion" => "PDF-Version",
+			"PageCount" => "Pages",
+			"Title" => "Title",
+			"Duration" => "Duration",
+			"Artist" => "Artist",
+			"AudioBitrate" => "Bitrate",
+			"ChannelMode" => "Channel mode",
+			"Compression" => "Compression",
+			"FrameCount" => "Frames",
+			"Vendor" => "Vendor",
+			"Album" => "Album",
+			"Genre" => "Genre",
+			"Composer" => "Composer",
+			"Model" => "Model",
+			"Maker" => "Maker",
+			"OwnerName" => "Owner",
+			"CanonModelID" => "Canon-eigene Model ID",
+			"UserComment" => "Comment (3)",
+			"GPSPosition" => "Position",
+			"Publisher" => "Publisher",
+			"Language" => "Language",
+			"AudioChannels" => "Audio channels",
+			"Channels" => "Channels",
+			"VideoFrameRate" => "Video framerate",
+	);
+	foreach (keys %options) {
+		push(@metaOptions, $_);
+	}
+
+	# codec information for media files (webm, mp4)
+	my @codec_tags = qw(CodecID AudioCodecID VideoCodecID CompressorID);
+	push(@metaOptions, @codec_tags);
+
+	$exifData = get_meta($file, $charset, @metaOptions);
+
+	# extract additional information for documents or animation/video/audio or archives
+	if (defined($$exifData{PageCount})) {
+		if ($$exifData{PageCount} eq 1) {
+			$info = "1 Page";
+		} else {
+			$info = $$exifData{PageCount} . " Pages";
+		}
+	}
+	if (defined($$exifData{Duration})) {
+		$info = $$exifData{Duration};
+		$info =~ s/ \(approx\)$//;
+		$info =~ s/^0:0?//; # 0:01:45 -> 1:45 / 0:12:37 -> 12:37
+
+		# round and format seconds to mm:ss if only seconds are returned
+		if ($info =~ /(\d+)\.(\d\d) s/) {
+			my $sec = $1;
+			if ($2 >= 50) { $sec++ }
+			my $min = int($sec / 60);
+			$sec = $sec - $min * 60;
+			$sec = sprintf("%02d", $sec);
+			$info = $min . ':' . $sec;
+		}
+	}
+
+	# every file has this, so place it first
+	$markup  = "<strong>$options{FileSize}:</strong> " . delete($$exifData{FileSize}) . "<br />";
+	$markup .= "<strong>$options{FileType}:</strong> " . delete($$exifData{FileType}) . "<br />";
+	$markup .= "<strong>$options{MIMEType}:</strong> " . delete($$exifData{MIMEType}) . "<br />";
+
+	# merge all codec values into one array
+	my @codec_list = map { my $tag = $_; grep {/^$tag/} keys $exifData } @codec_tags;
+	my @codecs = map { delete($$exifData{$_}) } @codec_list;
+
+	# replace english names with their translations
+	# tags without matching translation will be removed (e.g. ModifyDate (1))
+	foreach (keys %$exifData) {
+		if (defined($options{$_})) {
+			$$exifData{$options{$_}} = delete($$exifData{$_});
+		} else {
+			delete($$exifData{$_});
+		}
+	}
+
+	$$exifData{Codec} = join(", ", @codecs) if (@codecs);
+
+	$markup .= "<hr />" if (%$exifData);
+	foreach (sort keys %$exifData) {
+		$markup .= "<strong>$_:</strong> $$exifData{$_}<br />";
+	}
+	$markup .= $archive;
+
+	return ($info, $markup);
+}
+
+#
 # HTML utilities
 #
 
@@ -28,6 +161,17 @@ my $url_re=qr{(${protocol_re}[^\s<>()"]*?(?:\([^\s<>()"]*?\)[^\s<>()"]*?)*)((?:\
 sub protocol_regexp() { return $protocol_re }
 
 sub url_regexp() { return $url_re }
+
+sub count_lines($) {
+	my ($str) = @_;
+	# do not count empty lines
+	$str =~ s!(<br ?/>)+!<br />!g;
+	# do not count newlines at the end of the comment
+	$str =~ s!(<br ?/>)+$!!;
+	# the optional regex parts are for matching parsed /fefe/ html
+	my $count = () = $str =~ m!<br ?/>|<p( u="")?>|<li>|<blockquote!g;
+	return $count;
+}
 
 sub abbreviate_html($$$)
 {
@@ -215,7 +359,7 @@ sub do_wakabamark($;$$)
 		{
 			my @quote;
 			while($lines[0]=~/^(&gt;.*)/) { push @quote,$1; shift @lines; }
-			$res.="<blockquote>".do_spans($handler,@quote)."</blockquote>";
+			$res.="<span class=\"unkfunc\">".do_spans($handler,@quote)."</span>";
 
 			#while($lines[0]=~/^&gt;(.*)/) { push @quote,$1; shift @lines; }
 			#$res.="<blockquote>".do_blocks($handler,@quote)."</blockquote>";
@@ -281,12 +425,12 @@ sub compile_template($;$)
 	my ($str,$nostrip)=@_;
 	my $code;
 
-	unless($nostrip)
-	{
-		$str=~s/^\s+//;
-		$str=~s/\s+$//;
-		$str=~s/\n\s*/ /sg;
-	}
+	# unless($nostrip)
+	# {
+	# 	$str=~s/^\s+//;
+	# 	$str=~s/\s+$//;
+	# 	$str=~s/\n\s*/ /sg;
+	# }
 
 	while($str=~m!(.*?)(<(/?)(var|const|if|elsif|else|loop)(?:|\s+(.*?[^\\]))>|$)!sg)
 	{
@@ -428,7 +572,8 @@ sub escamp($)
 sub urlenc($)
 {
 	my ($str)=@_;
-	$str=~s/([^\w ])/"%".sprintf("%02x",ord $1)/sge;
+	$str=~s/([^^\w\-_.!~*'()])/ sprintf "%%%02x", ord $1 /eg;
+	# $str=~s/([^\w ])/"%".sprintf("%%%02x",ord $1)/sge;
 	$str=~s/ /+/sg;
 	return $str;
 }
@@ -597,10 +742,11 @@ sub handle_chunked_transfer($)
 sub make_http_forward($)
 {
     my ($location) = @_;
+	$location = encode('utf8',$location);
 
     print "Status: 303 Go West\n";
     print "Location: $location\n";
-    print "Content-Type: text/html\n";
+    print "Content-Type: text/html;charset=utf-8\n";
     print "\n";
     print '<html><body><a href="'.$location.'">'.$location.'</a></body></html>';
 }
@@ -694,19 +840,6 @@ sub cookie_encode($;$)
 	}
 
 	return $str;
-}
-
-sub get_xhtml_content_type(;$$)
-{
-	my ($charset,$usexhtml)=@_;
-	my $type;
-
-	if($usexhtml and $ENV{HTTP_ACCEPT}=~/application\/xhtml\+xml/) { $type="application/xhtml+xml"; }
-	else { $type="text/html"; }
-
-	$type.="; charset=$charset" if($charset);
-
-	return $type;
 }
 
 #
@@ -962,25 +1095,6 @@ sub setup_masking
     }
 }
 
-sub setup_masking($$)
-{
-	my ($key,$algorithm)=@_;
-
-	$algorithm=$has_md5?"md5":"rc6" unless $algorithm;
-
-	my ($block,$stir);
-
-	if($algorithm eq "md5")
-	{
-		return (md5($key),sub { md5(shift) })
-	}
-	else
-	{
-		setup_rc6($key);
-		return (null_string(16),sub { encrypt_rc6(shift) })
-	}
-}
-
 sub make_random_string($)
 {
 	my ($num)=@_;
@@ -1079,6 +1193,10 @@ sub analyze_image($$)
 	return ("jpg",@res) if(@res=analyze_jpeg($file));
 	return ("png",@res) if(@res=analyze_png($file));
 	return ("gif",@res) if(@res=analyze_gif($file));
+	return ("pdf",@res) if ( @res = analyze_pdf($file) );
+	return ("svg",@res) if ( @res = analyze_svg($file) );
+	return ("webm",@res) if ( @res = analyze_webm($file) );
+	return ("mp4",@res) if ( @res = analyze_mp4($file) );
 
 	# find file extension for unknown files
 	my ($ext)=$name=~/\.([^\.]+)$/;
@@ -1168,9 +1286,133 @@ sub analyze_gif($)
 	return ($width,$height);
 }
 
-sub make_thumbnail($$$$$;$)
+# very basic pdf-header check
+sub analyze_pdf($) {
+	my ($file) = @_;
+	my ($bytes, $buffer);
+
+	$bytes = read($file, $buffer, 5);
+	seek($file, 0, 0);
+	return () unless($bytes == 5);
+
+	my $magic = unpack("A5", $buffer);
+	return () unless($magic eq "%PDF-");
+
+	return (1, 1);
+}
+
+# find some characteristic strings at the beginning of the XML.
+# can break on slightly different syntax.
+sub analyze_svg($) {
+	my ($file) = @_;
+	my ($buffer, $header);
+
+	read($file, $buffer, 600);
+	seek($file, 0, 0);
+
+	$header = unpack("A600", $buffer);
+
+    if ($header =~ /<svg version=/i or $header =~ /<!DOCTYPE svg/i or
+		$header =~ m!<svg\s(?:.*\s)?xmlns="http://www\.w3\.org/2000/svg"\s!i or
+		$header =~ m!<svg\s(?:.*\n)*\s*xmlns="http://www\.w3\.org/2000/svg"\s!i) {
+        return (1, 1);
+    }
+
+	return ();
+}
+
+sub analyze_webm($) {
+    my ($file) = @_;
+    my ($buffer);
+
+    read($file, $buffer, 4);
+    seek($file, 0, 0);
+
+    if ($buffer eq "\x1A\x45\xDF\xA3") {
+		my $exifTool = new Image::ExifTool;
+		my $exifData = $exifTool->ImageInfo($file, 'ImageSize');
+		seek($file, 0, 0);
+		if ($$exifData{ImageSize} =~ /(\d+)x(\d+)/) {
+			return($1, $2);
+		}
+	}
+
+	return();
+}
+
+sub analyze_mp4($) {
+	my ($file) = @_;
+	my ($buffer1, $buffer2);
+
+	read($file, $buffer1, 3);
+	seek($file, 1, 1);
+	read($file, $buffer2, 8);
+	seek($file, 0, 0);
+
+	if ($buffer1 eq "\x00\x00\x00"
+	  and $buffer2 eq "\x66\x74\x79\x70\x6D\x70\x34\x32"
+	  or  $buffer2 eq "\x66\x74\x79\x70\x69\x73\x6F\x6D") {
+		my $exifTool = new Image::ExifTool;
+		my $exifData = $exifTool->ImageInfo($file, 'ImageSize');
+		seek($file, 0, 0);
+		if ($$exifData{ImageSize} =~ /(\d+)x(\d+)/) {
+			return($1, $2);
+		}
+	}
+
+	return();
+}
+
+#
+# Thumbnails
+#
+
+sub test_afmod {
+    my ($afmod) = @_;
+    my @now = localtime;
+    my ($month, $day) = ($now[4] + 1, $now[3]);
+    return 1 if ($afmod && $month == 4 && $day == 1);
+    return 0;
+}
+
+sub get_thumbnail_dimensions {
+    my ($width,$height,$maxw,$maxh) = @_;
+    my ($tn_width,$tn_height);
+
+    if($width <= $maxw and $height <= $maxh) {
+        $tn_width = $width;
+        $tn_height = $height;
+    }
+    else {
+        $tn_width = $maxw;
+        $tn_height = int(($height*($maxw))/$width);
+
+        if($tn_height>$maxh) {
+            $tn_width = int(($width*($maxh))/$height);
+            $tn_height = $maxh;
+        }
+    }
+
+    return ($tn_width,$tn_height);
+}
+
+sub make_video_thumbnail {
+    my ($filename, $thumbnail, $width, $height, $max_w, $max_h, $command) = @_;
+    my ($tn_width, $tn_height);
+    ($tn_width, $tn_height) = get_thumbnail_dimensions($width,$height,$max_w,$max_h);
+
+    $command = "ffmpeg" unless ($command);
+    my $filter = "scale=${tn_width}:${tn_height}";
+
+    `$command -v quiet -i $filename -vframes 1 -vf $filter $thumbnail`;
+
+    return 1 unless ($?);
+    return 0;
+}
+
+sub make_thumbnail($$$$$$;$)
 {
-	my ($filename,$thumbnail,$width,$height,$quality,$convert)=@_;
+	my ($filename,$thumbnail,$width,$height,$quality,$afmod,$convert)=@_;
 
 	# first try ImageMagick
 
@@ -1178,8 +1420,21 @@ sub make_thumbnail($$$$$;$)
 	my $method=($magickname=~/\.gif$/)?"-coalesce -sample":"-resize";
 	$magickname.="[0]" if($magickname=~/\.gif$/);
 
+    my $param="";
+
+    if (test_afmod($afmod))
+    {
+        my @params = ('-flip', '-flop', '-transpose', '-transverse',
+            '-rotate 75', '-roll +60-45', '-quality 5', '-negate', '-monochrome',
+            '-gravity NorthEast -stroke "#000C" -strokewidth 2 -annotate 90x90+5+135 "Unregistered Hypercam" '
+            . '-stroke none -fill white -annotate 90x90+5+135 "Unregistered Hypercam"'
+        );
+        $param = $params[rand @params];
+        # $background = "#BFB5A1" if ($thumbnail =~ /\.jpg$/ && $filename !~ /\.pdf$/);
+    }
+
 	$convert="convert" unless($convert);
-	`$convert $magickname $method ${width}x${height}! -quality $quality $thumbnail`;
+	`$convert $magickname $method ${width}x${height}! -quality $quality $param $thumbnail`;
 
 	return 1 unless($?);
 
@@ -1388,5 +1643,59 @@ sub add(@) { my ($sum,$term); while(defined ($term=shift)) { $sum+=$term } retur
 sub rol($$) { my ($x,$n); ( $x = shift ) << ( $n = 31 & shift ) | 2**$n - 1 & $x >> 32 - $n; }
 sub ror($$) { rol(shift,32-(31&shift)); } # rorororor
 sub mul($$) { my ($a,$b)=@_; return ( (($a>>16)*($b&65535)+($b>>16)*($a&65535))*65536+($a&65535)*($b&65535) )%4294967296 }
+
+sub get_urlstring($) {
+    my ($filename) = @_;
+	$filename =~ s/ /%20/g;
+	$filename =~ s/\[/%5B/g;
+	$filename =~ s/\]/%5D/g;
+	$filename =~ s/\</%3C/g;
+	$filename =~ s/\>/%3E/g;
+	return $filename;
+}
+
+sub get_extension($) {
+	my ($filename) = @_;
+	$filename =~ m/\.([^.]+)$/;
+	#return uc(clean_string($1));
+	return uc($1);
+}
+
+sub get_displayname($) {
+	my ($filename) = @_;
+
+	# (.{12})    - first X characters of the file(base)name
+	# .{5,}      - has the basename X+Y or more characters?
+	# (\.[^.]+)$ - Match a dot, followed by any number of non-dots until the end
+	# output is: the first match ()->$1 a fixed string "[...]" and the extension ()->$2
+	$filename =~ s/(.{12}).{5,}(\.[^.]+)$/$1\[...\]$2/;
+
+	#return clean_string($filename);
+	return $filename;
+}
+
+sub get_displaysize($;$$) {
+	my ($size, $dec_mark, $dec_places) = @_;
+	my $out;
+	$dec_places = 1 unless (defined($dec_places));
+
+	if ($size < 1024) {
+		$out = sprintf("%d Bytes", $size);
+	} elsif ($size >= 1024 && $size < 1024*1024) {
+		$out = sprintf("%.0f kB", $size/1024);
+	} else {
+		$out = sprintf("%.${dec_places}f MB", $size / (1024*1024));
+		$out =~ s/00 MB$/0 MB/ if ($dec_places gt 1);
+	}
+
+	$out =~ s/\./$dec_mark/e if ($dec_mark);
+	return $out;
+}
+
+sub get_pretty_html($$) {
+	my ($text, $add) = @_;
+	$text =~ s!<br />!<br />$add!g;
+	return $text;
+}
 
 1;

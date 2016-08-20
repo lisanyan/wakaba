@@ -12,9 +12,11 @@ BEGIN {
 	die S_NOSQL unless(defined &SQL_USERNAME);
 	die S_NOSQL unless(defined &SQL_PASSWORD);
 
-	eval "use constant SQL_TABLE => 'comments'" unless(defined &SQL_TABLE);
+	eval "use constant SQL_TABLE => 'b_comments'" unless(defined &SQL_TABLE);
+	eval "use constant SQL_TABLE_IMG => 'b_img'" unless(defined &SQL_TABLE);
 	eval "use constant SQL_ADMIN_TABLE => 'admin'" unless(defined &SQL_ADMIN_TABLE);
 	eval "use constant SQL_REPORT_TABLE => 'reports'" unless(defined &SQL_REPORT_TABLE);
+	eval "use constant BOARD_IDENT => 'b'" unless(defined &SQL_REPORT_TABLE);
 
 	eval "use constant USE_TEMPFILES => 1" unless(defined &USE_TEMPFILES);
 
@@ -25,8 +27,10 @@ BEGIN {
 	eval "use constant FAVICON => '/wakaba.ico'" unless(defined &FAVICON);
 	eval "use constant HOME => '../'" unless(defined &HOME);
 	eval "use constant IMAGES_PER_PAGE => 10" unless(defined &IMAGES_PER_PAGE);
-	eval "use constant REPLIES_PER_THREAD => 10" unless(defined &REPLIES_PER_THREAD);
+	eval "use constant REPLIES_PER_THREAD => 4" unless(defined &REPLIES_PER_THREAD);
 	eval "use constant IMAGE_REPLIES_PER_THREAD => 0" unless(defined &IMAGE_REPLIES_PER_THREAD);
+	eval "use constant REPLIES_PER_LOCKED_THREAD => 1" unless(defined &REPLIES_PER_LOCKED_THREAD);
+	eval "use constant IMAGE_REPLIES_PER_LOCKED_THREAD => 0" unless(defined &IMAGE_REPLIES_PER_LOCKED_THREAD);
 	eval "use constant S_ANONAME => 'Anonymous'" unless(defined &S_ANONAME);
 	eval "use constant S_ANOTEXT => ''" unless(defined &S_ANOTEXT);
 	eval "use constant S_ANOTITLE => ''" unless(defined &S_ANOTITLE);
@@ -47,6 +51,7 @@ BEGIN {
 	eval "use constant MAX_IMAGE_WIDTH => 16384" unless(defined &MAX_IMAGE_WIDTH);
 	eval "use constant MAX_IMAGE_HEIGHT => 16384" unless(defined &MAX_IMAGE_HEIGHT);
 	eval "use constant MAX_IMAGE_PIXELS => 50000000" unless(defined &MAX_IMAGE_PIXELS);
+    eval "use constant MAX_FILES => 4" unless (defined &MAX_FILES);
 
 	eval "use constant ENABLE_CAPTCHA => 1" unless(defined &ENABLE_CAPTCHA);
 	eval "use constant SQL_CAPTCHA_TABLE => 'captcha'" unless(defined &SQL_CAPTCHA_TABLE);
@@ -92,6 +97,7 @@ BEGIN {
 	eval "use constant DISPLAY_ID => 0" unless(defined &DISPLAY_ID);
 	eval "use constant EMAIL_ID => 'Heaven'" unless(defined &EMAIL_ID);
 	eval "use constant TRIPKEY => '!'" unless(defined &TRIPKEY);
+	eval "use constant DECIMAL_MARK => ','"    unless ( defined &DECIMAL_MARK );
 	eval "use constant ENABLE_WAKABAMARK => 1" unless(defined &ENABLE_WAKABAMARK);
 	eval "use constant APPROX_LINE_LENGTH => 150" unless(defined &APPROX_LINE_LENGTH);
 	eval "use constant STUPID_THUMBNAILING => 0" unless(defined &STUPID_THUMBNAILING);
@@ -101,6 +107,7 @@ BEGIN {
 	eval "use constant FORCED_ANON => 0" unless(defined &FORCED_ANON);
 	eval "use constant SPAM_TRAP => 1" unless(defined &SPAM_TRAP);
 	eval "use constant PREVENT_GHOST_BUMPING => 1" unless(defined &PREVENT_GHOST_BUMPING);
+	eval "use constant ENABLE_AFMOD => 1" unless(defined &ENABLE_AFMOD);
 
 	eval "use constant BAN_DATES => [{label=>'Never',time=>0},{label=>'3 days',time=>3600*24*3},{label=>'1 week',time=>3600*24*7},".
 	"{label=>'1 month',time=>3600*24*30},{label=>'1 year',time=>3600*24*365}]" unless(defined &BAN_DATES);
@@ -109,15 +116,16 @@ BEGIN {
 	eval "use constant THUMB_DIR => 'thumb/'" unless(defined &THUMB_DIR);
 	eval "use constant RES_DIR => 'res/'" unless(defined &RES_DIR);
 	eval "use constant ARCHIVE_DIR => 'arch/'" unless (defined &ARCHIVE_DIR);
-	eval "use constant REDIR_DIR => 'redir/'" unless (defined &REDIR_DIR);
+    eval "use constant ORPH_DIR => 'orphans/'" unless ( defined &ORPH_DIR );
 	eval "use constant HTML_SELF => 'wakaba.html'" unless(defined &HTML_SELF);
-	eval "use constant JS_FILE => '/static/wakaba3.js'" unless(defined &JS_FILE);
 	eval "use constant CSS_DIR => 'static/css/'" unless(defined &CSS_DIR);
 	eval "use constant PAGE_EXT => '.html'" unless(defined &PAGE_EXT);
 	eval "use constant ERRORLOG => ''" unless(defined &ERRORLOG);
 	eval "use constant CONVERT_COMMAND => 'convert'" unless(defined &CONVERT_COMMAND);
+	eval "use constant VIDEO_CONVERT_COMMAND => 'ffmpeg'" unless(defined &VIDEO_CONVERT_COMMAND);
 
 	eval "use constant FILETYPES => ()" unless(defined &FILETYPES);
+	eval "use constant FILESIZES => ()" unless(defined &FILESIZES);
 
 	eval "use constant ENABLE_DNSBL_CHECK => 1" unless(defined &ENABLE_DNSBL_CHECK);
 	eval "use constant DNSBL_TIMEOUT => 0.1" unless(defined &DNSBL_TIMEOUT);
