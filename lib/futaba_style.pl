@@ -367,7 +367,7 @@ use constant ADMIN_LOGIN_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 
 
 use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
-<div class="dellist"><const S_MANAPOST></div>
+<div class="dellist"><const S_MANAPANEL></div>
 
 <div class="postarea">
 <form id="postform" action="<var $self>" method="post" enctype="multipart/form-data">
@@ -396,7 +396,6 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <script type="text/javascript">set_inputs("postform")</script>
 <br  />
 
-<div class="dellist"><const S_MANAPANEL></div>
 
 <if !$thread>
 	<script type="text/javascript">

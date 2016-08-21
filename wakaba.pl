@@ -2382,6 +2382,18 @@ sub make_admin_post_panel($$)
 		$page = 0 if ($page !~ /^\w+$/);
 		my $thread_offset = $page * (IMAGES_PER_PAGE);
 
+
+		my $abbreviate = sub {
+			my ($row)=@_;
+			my $abbreviation=abbreviate_html($$row{comment},MAX_LINES_SHOWN,APPROX_LINE_LENGTH);
+			if($abbreviation)
+			{
+				$$row{abbrev} = get_abbrev_message(count_lines($$row{comment}) - count_lines($abbreviation));
+				$$row{comment_full} = $$row{comment};
+				$$row{comment} = $abbreviation;
+			}
+		};
+
 		# Grab the parent posts
 		$sth=$dbh->prepare(
 			  "SELECT ".SQL_TABLE.".* FROM "
@@ -2395,6 +2407,7 @@ sub make_admin_post_panel($$)
 		{
 			# should be first
 			$$row{comment} = resolve_reflinks($$row{comment}, $isAdmin);
+			$abbreviate->($row);
 			add_images_to_row($row);
 
 			my @thread = ($row);
@@ -2428,13 +2441,8 @@ sub make_admin_post_panel($$)
 			{
 				add_images_to_row($inner_row);
 				$$inner_row{comment} = resolve_reflinks($$inner_row{comment}, $isAdmin);
-				my $abbreviation=abbreviate_html($$inner_row{comment},MAX_LINES_SHOWN,APPROX_LINE_LENGTH);
-				if($abbreviation)
-				{
-	                $$inner_row{abbrev} = get_abbrev_message(count_lines($$inner_row{comment}) - count_lines($abbreviation));
-	                $$inner_row{comment_full} = $$inner_row{comment};
-	                $$inner_row{comment} = $abbreviation;
-	            }
+				$abbreviate->($inner_row);
+
 				$curr_posts++;
 				push @thread, $inner_row;
 			}

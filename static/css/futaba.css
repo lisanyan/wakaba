@@ -2,6 +2,7 @@ html,
 body {
     background: #FFFFEE;
     color: #800000;
+    font: normal 1em serif;
 }
 a {
     color: #0000EE;
@@ -35,6 +36,7 @@ a:hover {
     background: #EEAA88;
     color: #800000;
     font-weight: 800;
+	padding: 0.3em;
 }
 .footer {
     text-align: center;
