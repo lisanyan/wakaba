@@ -9,6 +9,20 @@ Deny from all
 Deny from all
 </Files>
 
+<IfModule mod_rewrite.c>
+# Enable Rewrite Engine
+RewriteEngine on
+RewriteBase /
+
+# api shortcuts
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^/([^/]+)/api/([^/]+)$ wakaba.pl?board=$1&json=$2 [L]
+
+# allow download of original filenames
+RewriteRule ^([^/]+)/src/([^/]+)/([^/]+)$ $1/src/$2 [L,NS,DPI]
+</IfModule>
+
+
 <IfModule mod_headers.c>
 <Files *.html>
 Header add Expires "Mon, 26 Jul 1997 05:00:00 GMT"
