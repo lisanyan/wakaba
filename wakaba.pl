@@ -192,10 +192,12 @@ return 1 if(caller); # stop here if we're being called externally
 		my $fileonly=$query->param("fileonly");
 		my $archive=$query->param("archive");
 		my $admin=$query->cookie("wakaadmin");
+		my $admin_del=$query->param("admindel");
+		my $parent=$query->param("parent");
 		my $ajax=$query->param("ajax");
 		my @posts=$query->param("delete");
 
-		delete_stuff($password,$fileonly,$archive,$admin,$ajax,@posts);
+		delete_stuff($password,$fileonly,$archive,$admin,$admin_del,$parent,$ajax,@posts);
 	}
 	elsif($task eq "report" or $task eq decode_string(S_REPORT,CHARSET))
 	{
@@ -370,7 +372,7 @@ sub show_posts {
         while($row = get_decoded_hashref($sth))
         {
             add_images_to_row($row);
-            # $$row{comment} = resolve_reflinks($$row{comment});
+            $$row{comment} = resolve_reflinks($$row{comment});
             push(@thread, $row);
         }
         my $output = encode_string(
@@ -497,6 +499,7 @@ sub build_cache_page($$@)
 		# abbreviate the remaining posts
 		foreach my $post (@{$$thread{posts}})
 		{
+			$$post{comment} = resolve_reflinks($$post{comment});
 			my $abbreviation=abbreviate_html($$post{comment},MAX_LINES_SHOWN,APPROX_LINE_LENGTH);
 			if($abbreviation)
 			{
@@ -559,6 +562,7 @@ sub build_thread_cache($)
 	while($row=get_decoded_hashref($sth))
 	{
 		hide_row_els($row);
+		$$row{comment} = resolve_reflinks($$row{comment});
 		push(@thread,$row);
 	}
 	add_images_to_thread(@thread) if($thread[0]);
@@ -670,6 +674,7 @@ sub find_posts {
                 # $$row{comment} =~ s/($find)/<span style="background-color: #706B5E; color: #FFFFFF; font-weight: bold;">$1<\/span>/ig;
 
                 add_images_to_row($row);
+				$$row{comment} = resolve_reflinks($$row{comment});
                 if (!$$row{parent}) { # OP post
                     push @results, $row;
                 } else { # reply post
@@ -695,7 +700,8 @@ sub find_posts {
             search      => 1,
         ));
 
-    $output =~ s/^\s+\n//mg;
+	$output =~ s/^\s+//; # remove whitespace at the beginning
+	$output =~ s/^\s+\n//mg; # remove empty lines
     print($output);
 }
 
@@ -811,6 +817,7 @@ sub output_json_post {
     if( defined($row) ) {
         $code = 200;
         hide_row_els($row);
+		$$row{comment} = resolve_reflinks($$row{comment});
         $data{'post'} = $row;
     }
     elsif($sth->rows == 0) {
@@ -847,6 +854,7 @@ sub output_json_newposts {
     if($sth->rows) {
         $code = 200;
         while( $row=get_decoded_hashref($sth) ) {
+			$$row{comment} = resolve_reflinks($$row{comment});
             hide_row_els($row);
             push(@data, $row);
         }
@@ -956,6 +964,7 @@ sub json_find_posts {
 
                 hide_row_els($row);
                 add_images_to_row($row);
+				$$row{comment} = resolve_reflinks($$row{comment});
                 if (!$$row{parent}) { # OP post
                     # $$row{sticky_isnull} = 1; # hack, until this field is removed.
                     push @results, $row;
@@ -1232,7 +1241,7 @@ sub post_stuff
 	my $sth=$dbh->prepare("INSERT INTO ".SQL_TABLE." VALUES(null,?,?,?,?,?,?,?,?,?,?,?,null,?,?,?);") or make_sql_error();
 	$sth->execute($parent,$time,$lasthit,$numip,
 	$date,$name,$trip,$email,$subject,$password,$comment,
-	$as_staff,$autosage,$locked) or make_error($dbh->errstr);
+	$as_staff,$autosage,$locked) or make_sql_error();
 
 	# find out what our new thread number is
 	$sth=$dbh->prepare("SELECT num FROM ".SQL_TABLE." WHERE timestamp=? AND comment=?;") or make_sql_error();
@@ -1564,6 +1573,24 @@ sub simple_format($@)
 	} split /\n/,$comment;
 }
 
+sub resolve_reflinks {
+    my ($comment) = @_;
+
+    $comment =~ s|<!--reflink-->&gt;&gt;&gt;\/?([A-Za-z0-9-]+)/([0-9]+)|
+        my $res = get_post_ref($2,$1);
+        if ($res) { '<span class="backreflink"><a href="'.get_reply_link($$res{num},$$res{parent},$1).'">&gt;&gt;/'.$1.'/'.$2.'</a></span>'; }
+        else { '<span class="backreflink"><del>&gt;&gt;/'.$1.'/'.$2.'</del></span>'; }
+    |ge;
+
+    $comment =~ s|<!--reflink-->&gt;&gt;([0-9]+)|
+        my $res = get_post_ref($1);
+        if ($res) { '<span class="backreflink"><a href="'.get_reply_link($$res{num},$$res{parent}).'">&gt;&gt;'.$1.'</a></span>'; }
+        else { '<span class="backreflink"><del>&gt;&gt;'.$1.'</del></span>'; }
+    |ge;
+
+    return $comment;
+}
+
 sub encode_string($)
 {
 	my ($str)=@_;
@@ -1636,6 +1663,23 @@ sub get_parent_post($)
 	$sth->execute($thread) or make_sql_error();
 
 	return $sth->fetchrow_hashref();
+}
+
+sub get_post_ref($;$)
+{
+    my ($thread, $board) = @_;
+    my ($sth,$ret,$tbl);
+
+    $tbl = (-d $board) ? $board . '_comments' : SQL_TABLE;
+
+    $sth = $dbh->prepare(
+        "SELECT num,parent FROM " . $tbl . " WHERE num=?;"
+    ) or make_sql_error();
+    $sth->execute($thread) or make_sql_error();
+    $ret = $sth->fetchrow_hashref();
+    $sth->finish();
+
+    return $ret;
 }
 
 sub sage_count($)
@@ -1881,61 +1925,99 @@ sub thread_control
 # Deleting
 #
 
-sub delete_stuff($$$$$@)
+sub delete_stuff($$$$$$$@)
 {
-	my ($password,$fileonly,$archive,$admin,$ajax,@posts)=@_;
-	my ($post);
+	my ($password,$fileonly,$archive,$admin,$admin_del,$parent,$ajax,@posts)=@_;
+	my ($post,$adminDel);
+    my $noko = 1; # try to stay in thread after deletion by default
+	my $deletebyip = 0;
 
 	$ajax_errors=1 if $ajax;
 
-	check_password($admin,'') if($admin);
-	make_error(S_BADDELPASS) unless($password or $admin); # refuse empty password immediately
+	if ($admin_del) {
+        check_password( $admin, '' );
+        $adminDel = 1;
+    }
+
+	# allow deletion by ip with empty password
+	if ( !$password and !$adminDel ) { $deletebyip = 1; }
+    make_error(S_BADDELPASS)
+		unless((!$password and $deletebyip) or ($password and !$deletebyip) or $adminDel);
 
 	# no password means delete always
-	$password="" if($admin);
+	$password="" if($adminDel);
 
+	my (@errors, @ArrayOfErrors);
 	foreach $post (@posts)
 	{
-		delete_post($post,$password,$fileonly,$archive);
+		my $ip = delete_post($post,$password,$fileonly,$deletebyip,$archive,$adminDel,$admin);
+        if ($ip !~ /:/ and $ip !~ /\d+\.\d+\.\d+\.\d+/) # Function returned with error string
+        {
+            push (@errors,"Post $post: ".$ip);
+            push @ArrayOfErrors, { post_id => $post, reason => $ip };
+            next;
+        }
+        $noko = 0 if ( $parent and $post eq $parent ); # the thread is deleted and cannot be redirected to
 	}
 
 	# update the cached HTML pages
 	build_cache();
 
-	if($ajax) {
-		make_json_header();
-		print $JSON->encode({redir => get_board_id().'/'.HTML_SELF});
+    if (@errors) {
+        my $errstring = S_PREWRAP, join("\n", @errors);
+        make_error($ajax ? \@ArrayOfErrors : $errstring);
 	}
-	else {
-		if($admin and $ENV{HTTP_REFERER}=~/task=mpanel/)
-		{ make_http_forward(get_script_name()."?task=mpanel&board=".get_board_id()); }
+	else
+	{
+		my $redir;
+
+		if ( $noko == 1 and $parent )
+		{ $redir = get_board_id() . '/' . RES_DIR . $parent . PAGE_EXT; }
 		else
-		{ make_http_forward(get_board_id().'/'.HTML_SELF); }
+		{ $redir = get_board_id().'/'.HTML_SELF; }
+
+		if($ajax) {
+			make_json_header();
+			print $JSON->encode({redir => get_board_id().'/'.HTML_SELF});
+		}
+		else
+		{ make_http_forward($redir); }
 	}
 }
 
-sub delete_post($$$$)
+sub delete_post($$$$$;$$)
 {
-	my ($post,$password,$fileonly,$archiving)=@_;
-	my ($sth,$row,$res,$reply);
+	my ($post,$password,$fileonly,$archiving,$deletebyip,$admin_del,$admin)=@_;
+	my ($sth,$row,$res,$reply,$postinfo);
+
 	my $thumb=THUMB_DIR;
 	my $archive=ARCHIVE_DIR;
 	my $src=IMG_DIR;
+    my $numip=dot_to_dec(get_remote_addr()); # do not use $ENV{REMOTE_ADDR}
 
-	$sth=$dbh->prepare("SELECT * FROM ".SQL_TABLE." WHERE num=?;") or make_sql_error();
-	$sth->execute($post) or make_sql_error();
+	if(defined($admin_del))
+    {
+        check_password($admin, '');
+    }
+
+	$sth=$dbh->prepare("SELECT * FROM ".SQL_TABLE." WHERE num=?;") or return S_SQLFAIL;
+	$sth->execute($post) or return S_SQLFAIL;
 
 	if($row=$sth->fetchrow_hashref())
 	{
-		make_error(S_BADDELPASS) if($password and $$row{password} ne $password);
+		my $parent_post = get_post($$row{parent});
+
+		return S_BADDELPASS if($password and $$row{password} ne $password);
+        return S_BADDELIP if($deletebyip and ($numip and $$row{ip} ne $numip));
+        return S_LOCKED if($parent_post && $$parent_post{locked} and !$admin_del);
 
 		unless($fileonly)
 		{
 			# remove files from comment and possible replies
             $sth = $dbh->prepare(
                     "SELECT image,thumbnail FROM " . SQL_TABLE_IMG . " WHERE post=? OR thread=?;" )
-              or make_sql_error();
-            $sth->execute( $post, $post ) or make_sql_error();
+              or return S_SQLFAIL;
+            $sth->execute( $post, $post ) or return S_SQLFAIL;
 
 			while($res=$sth->fetchrow_hashref())
 			{
@@ -1955,12 +2037,12 @@ sub delete_post($$$$)
 
 			$sth = $dbh->prepare(
                 "DELETE FROM " . SQL_TABLE_IMG . " WHERE post=? OR thread=?;" )
-              or make_sql_error();
-            $sth->execute( $post, $post ) or make_sql_error();
+              or return S_SQLFAIL;
+            $sth->execute( $post, $post ) or return S_SQLFAIL;
 
 			# remove post and possible replies
-			$sth=$dbh->prepare("DELETE FROM ".SQL_TABLE." WHERE num=? OR parent=?;") or make_sql_error();
-			$sth->execute($post,$post) or make_sql_error();
+			$sth=$dbh->prepare("DELETE FROM ".SQL_TABLE." WHERE num=? OR parent=?;") or return S_SQLFAIL;
+			$sth->execute($post,$post) or return S_SQLFAIL;
 
 			# prevent GHOST BUMPING by hanging a thread where it belongs:
 			# at the time of the last non sage post
@@ -1973,8 +2055,8 @@ sub delete_post($$$$)
 				{
                     # its actually a post in a thread, not a thread itself
                     # find the thread to check for autosage
-                    $sth=$dbh->prepare("SELECT * FROM " . SQL_TABLE . " WHERE num=?;" ) or make_sql_error();
-                    $sth->execute($parent) or make_sql_error();
+                    $sth=$dbh->prepare("SELECT * FROM " . SQL_TABLE . " WHERE num=?;" ) or return S_SQLFAIL;
+                    $sth->execute($parent) or return S_SQLFAIL;
                     my $threadRow=$sth->fetchrow_hashref();
                     if ($threadRow and $$threadRow{autosage} != 1)
 					{
@@ -1986,8 +2068,8 @@ sub delete_post($$$$)
                           $dbh->prepare( "SELECT * FROM "
                               . SQL_TABLE
                               . " WHERE parent=? ORDER BY timestamp DESC;"
-                          ) or make_sql_error();
-                        $sth2->execute($parent) or make_sql_error();
+                          ) or return S_SQLFAIL;
+                        $sth2->execute($parent) or return S_SQLFAIL;
                         my $postRow;
                         my $foundLastNonSage = 0;
                         while (($postRow = $sth2->fetchrow_hashref()) and $foundLastNonSage == 0 )
@@ -2000,9 +2082,9 @@ sub delete_post($$$$)
                           $dbh->prepare( "UPDATE "
                               . SQL_TABLE
                               . " SET lasthit=? WHERE parent=? OR num=?;" )
-                          or make_sql_error();
+                          or return S_SQLFAIL;
                         $upd->execute( $lasthit, $parent, $parent )
-                          or make_error( S_SQLFAIL ); #. " " . $dbh->errstr()
+                          or make_sql_error('yes');
                     }
                 }
             }
@@ -2011,8 +2093,8 @@ sub delete_post($$$$)
 		{
 			$sth = $dbh->prepare(
                     "SELECT image,thumbnail FROM " . SQL_TABLE_IMG . " WHERE post=?;" )
-              or make_sql_error();
-            $sth->execute($post) or make_sql_error();
+              or return S_SQLFAIL;
+            $sth->execute($post) or return S_SQLFAIL;
 
             while ( $res = $sth->fetchrow_hashref() ) {
 				# delete images if they exist
@@ -2023,8 +2105,8 @@ sub delete_post($$$$)
 			$sth = $dbh->prepare( "UPDATE "
 				  . SQL_TABLE_IMG
 				  . " SET size=0,md5=null,thumbnail=null,info=null,info_all=null WHERE post=?;" )
-				or make_sql_error();
-			$sth->execute($post) or make_sql_error();
+				or return S_SQLFAIL;
+			$sth->execute($post) or return S_SQLFAIL;
 		}
 
 		# fix up the thread cache
@@ -2065,7 +2147,12 @@ sub delete_post($$$$)
 		{
 			build_thread_cache($$row{parent});
 		}
+        $postinfo = dec_to_dot($$row{ip});
 	}
+	$sth->finish() if $sth;
+
+	$postinfo = "Post not found" unless $postinfo;
+	return $postinfo;
 }
 
 #'
@@ -2179,6 +2266,7 @@ sub make_admin_post_panel($;$)
 			else { $rowtype^=3; }
 			$$row{rowtype}=$rowtype;
 			add_images_to_row($row);
+			$$row{comment} = resolve_reflinks($$row{comment});
 
 			push @posts,$row;
 		}
@@ -2466,7 +2554,7 @@ sub delete_all($$$$)
 		$sth->execute( $mask, $ip, $mask ) or make_sql_error();
 		while ( $row = $sth->fetchrow_hashref() ) { push( @posts, $$row{num} ); }
 
-		delete_stuff('',0,0,$admin,0,@posts);
+		delete_stuff('',0,0,$admin,1,0,0,@posts);
 	}
 }
 
@@ -2943,7 +3031,7 @@ sub trim_database()
 
 		while($row=$sth->fetchrow_hashref())
 		{
-			delete_post($$row{num},"",0,ARCHIVE_MODE);
+			delete_post($$row{num},"",0,ARCHIVE_MODE,0);
 		}
 	}
 
@@ -2962,7 +3050,7 @@ sub trim_database()
 		{
 			my ($threadposts,$threadsize)=count_posts($$row{num});
 
-			delete_post($$row{num},"",0,ARCHIVE_MODE);
+			delete_post($$row{num},"",0,ARCHIVE_MODE,0);
 
 			$threads--;
 			$posts-=$threadposts;
@@ -3059,7 +3147,8 @@ sub get_decoded_arrayref($)
 # SQL MIGRATION shit
 #
 
-sub update_db_schema { # mysql-specific. will be removed after migration is done.
+sub update_db_schema
+{ # mysql-specific. will be removed after migration is done.
 # try to select a field that only exists if migration was already done
 # exit if no error occurs
 	my ($sth);
@@ -3078,21 +3167,35 @@ sub update_db_schema { # mysql-specific. will be removed after migration is done
 		thumbnail, tn_width, tn_height, uploadname)
 		SELECT parent, num, image, size, md5, width, height, thumbnail, tn_width, tn_height, image
 		FROM " . SQL_TABLE . " WHERE image IS NOT NULL;"
-   ) or make_error($dbh->errstr);
-   $sth->execute() or make_error($dbh->errstr);
+   ) or make_sql_error('migrate');
+   $sth->execute() or make_sql_error('migrate');
 
 # replace thread=0 with post-id for OP images
    $sth = $dbh->prepare(
 		"UPDATE " . SQL_TABLE_IMG . " SET thread=post WHERE thread=0;"
-   ) or make_error($dbh->errstr);
-   $sth->execute() or make_error($dbh->errstr);
+   ) or make_sql_error('migrate');
+   $sth->execute() or make_sql_error('migrate');
+
+# dynamic reflinks
+   $sth = $dbh->prepare(
+		"SELECT * FROM " . SQL_TABLE . ";"
+   ) or make_sql_error('migrate');
+   $sth->execute() or make_sql_error('migrate');
+
+   while(my $row = get_decoded_hashref($sth))
+   {
+	   my $comment = $$row{comment};
+	   $comment =~s!<a href="/[\wöäü]+/res/\d+.html(#\d+)?" onclick="highlight\(\d+\)">&gt;&gt;(\d+)</a>!<\!--reflink-->&gt;&gt;$2!sg;
+       my $upd = $dbh->prepare("UPDATE ".SQL_TABLE." SET comment=? WHERE num=?") or make_sql_error('migrate');
+	   $upd->execute($comment, $$row{num});
+   }
 
 # remove unneeded columns from comments table, rename column, add banned column
    $sth = $dbh->prepare(
 		"ALTER TABLE " . SQL_TABLE . " DROP image, DROP size, DROP md5, DROP width, DROP height, DROP thumbnail,
 		DROP tn_width, DROP tn_height, DROP origname;"
-   ) or make_error($dbh->errstr);
-   $sth->execute() or make_error($dbh->errstr);
+   ) or make_sql_error('migrate');
+   $sth->execute() or make_sql_error('migrate');
 
 # add missing columns
    	$sth = $dbh->prepare(
@@ -3100,18 +3203,19 @@ sub update_db_schema { # mysql-specific. will be removed after migration is done
 		."ADD COLUMN adminpost INTEGER AFTER banned,"
 		."ADD COLUMN autosage INTEGER AFTER adminpost,"
 		."ADD COLUMN locked INTEGER AFTER autosage;"
-	) or make_error($dbh->errstr);
-	$sth->execute() or make_error($dbh->errstr);
+	) or make_sql_error('migrate');
+	$sth->execute() or make_sql_error('migrate');
 
 # bans
    	$sth = $dbh->prepare(
 		"ALTER TABLE ".SQL_ADMIN_TABLE." ADD COLUMN date INTEGER AFTER num,"
    		."ADD COLUMN expires INTEGER AFTER sval1;"
-	) or make_error($dbh->errstr);
-	$sth->execute() or make_error($dbh->errstr);
+	) or make_sql_error('migrate');
+	$sth->execute() or make_sql_error('migrate');
 }
 
-sub update_files_meta {
+sub update_files_meta
+{
 	my ($row, $sth2, $info, $info_all);
 	my ($sth);
 
@@ -3125,12 +3229,12 @@ sub update_files_meta {
 
     $sth = $dbh->prepare(
 		"SELECT num, image FROM " . SQL_TABLE_IMG . " WHERE image IS NOT NULL AND size>0 AND info_all IS NULL;"
-	) or make_error($dbh->errstr);
-    $sth->execute() or make_error($dbh->errstr);
+	) or make_sql_error('migrate');
+    $sth->execute() or make_sql_error('migrate');
 
 	$sth2 = $dbh->prepare(
 		"UPDATE " . SQL_TABLE_IMG . " SET info=?, info_all=? WHERE num=?;"
-	) or make_error($dbh->errstr);
+	) or make_sql_error('migrate');
     while ($row = $sth->fetchrow_hashref()) {
 		$$row{image} =~ s!.*/!!;
 		$$row{image} = BOARD_IDENT . '/' . IMG_DIR . $$row{image};
@@ -3140,6 +3244,6 @@ sub update_files_meta {
 			undef($info);
 			$info_all = "File not found";
 		}
-		$sth2->execute($info, $info_all, $$row{num}) or make_error($dbh->errstr);
+		$sth2->execute($info, $info_all, $$row{num}) or make_sql_error('migrate');
 	}
 }

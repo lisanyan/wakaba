@@ -25,7 +25,7 @@ use constant S_HIDDEN => 'Thumbnail hidden, click filename for the full image.';
 use constant S_NOTHUMB => 'No<br />thumbnail';								# Printed when there's no thumbnail
 use constant S_PICNAME => '';											# Prints text before upload name/link
 use constant S_REPLY => 'Reply';											# Prints text for reply link
-use constant S_REPLY => 'View';											# Prints text for reply link
+use constant S_VIEW => 'View';											# Prints text for reply link
 use constant S_OLD => 'Marked for deletion (old).';							# Prints text to be displayed before post is marked for deletion, see: retention
 use constant S_ABBR => '%d posts omitted. Click Reply to view.';			# Prints text to be shown when replies are hidden
 use constant S_ABBRIMG => '%d posts and %d images omitted. Click Reply to view.';						# Prints text to be shown when replies and images are hidden
@@ -159,6 +159,7 @@ use constant S_CANNOTREPORT => 'You cannot report posts on this board.';
 use constant S_REPORTSFLOOD => 'You can only report up to %d posts.';
 use constant S_NOTHREADERR => 'Thread does not exist.';				# Returns error when a non-existant thread is accessed
 use constant S_BADDELPASS => 'Incorrect password for deletion.';		# Returns error for wrong password (when user tries to delete file)
+use constant S_BADDELIP => 'Wrong ip';
 use constant S_NOTEXISTPOST => 'The post %d does not exist.';
 use constant S_WRONGPASS => 'Management password incorrect.';		# Returns error for wrong password (when trying to access Manager modes)
 use constant S_VIRUS => 'Possible virus-infected file.';				# Returns error for malformed files suspected of being virus-infected.
@@ -166,6 +167,7 @@ use constant S_NOTWRITE => 'Could not write to directory.';				# Returns error w
 use constant S_SPAM => 'Spammers are not welcome here.';					# Returns error when detecting spam
 use constant S_LOCKED => 'Thread is closed.';
 use constant S_NOBOARDACC => 'You don\'t have access to this board, accessible: %s<br /><a href="%s?task=logout">Logout</a>';
+use constant S_PREWRAP => '<span class="prewrap">%s</span>';
 
 use constant S_THREADLOCKED => '<strong>Thread %s</strong> is locked. You cannot reply to this thread.';
 use constant S_FILEINFO => 'Information';

@@ -119,6 +119,7 @@ use constant PAGE_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 </loop>
 
 <table class="userdelete"><tbody><tr><td>
+<if $thread><input type="hidden" name="parent" value="<var $thread>" /></if>
 <const S_REPDEL>[<label><input type="checkbox" name="fileonly" value="on" /><const S_DELPICONLY></label>]<br />
 <const S_DELKEY><input type="password" name="password" size="8" autocomplete="off" />
 <input name="task" value="<const S_DELETE>" type="submit" />
@@ -330,6 +331,7 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <form action="<var $self>" method="post">
 <input type="hidden" name="board" value="<const BOARD_IDENT>">
 <input type="hidden" name="task" value="delete" />
+<input type="hidden" name="admindel" value="yes" />
 
 <div class="delbuttons">
 <input type="submit" value="<const S_MPDELETE>" />

@@ -425,13 +425,6 @@ sub compile_template($;$)
 	my ($str,$nostrip)=@_;
 	my $code;
 
-	# unless($nostrip)
-	# {
-	# 	$str=~s/^\s+//;
-	# 	$str=~s/\s+$//;
-	# 	$str=~s/\n\s*/ /sg;
-	# }
-
 	while($str=~m!(.*?)(<(/?)(var|const|if|elsif|else|loop)(?:|\s+(.*?[^\\]))>|$)!sg)
 	{
 		my ($html,$tag,$closing,$name,$args)=($1,$2,$3,$4,$5);

@@ -81,7 +81,7 @@ use constant POST_VIEW_INCLUDE => q{
 
 <div id="posttext_<var $num>"><blockquote>
 <var $comment>
-<if $abbrev><div class="abbrev">[<a href="<var get_reply_link($num,$parent)>" onclick="return expand_post('<var $num>')"><var $abbrev></a>]</p></div></if>
+<if $abbrev><p class="abbrev">[<a href="<var get_reply_link($num,$parent)>" onclick="return expand_post('<var $num>')"><var $abbrev></a>]</p></if>
 </blockquote></div>
 
 <if !$parent && $omit>
