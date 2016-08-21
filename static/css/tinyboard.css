@@ -28,28 +28,12 @@ a:hover, div.adminbar a:hover {
 div.adminbar a:before, div.adminbar a:after {
 	content: " ";
 }
-div.logo:before {
-	clear: both;
-	content: "";
-	display: block;
-}
-div.logo {
+.boardname, .caption {
 	color: #AF0A0F;
-	font-family: tahoma;
-	font-size: 20pt;
+	font-size: 2em;
 	font-weight: bold;
-	letter-spacing: -2px;
-	margin: 0 0 13px; /* 1em with 10pt */
-	text-align: center;
-}
-div.logo img {
-	border: 1px solid #A9A9A9;
-	display: block;
-	font-size: 10pt; /* Needed for the 1em padding below to be the right size. */
-	margin: 12px auto 1em;
-}
-div.logo br {
-	display: none; /* display:block on the image makes this unnecessary. */
+	margin-top: 0.5em;
+	clear: both;
 }
 hr {
 	border: solid #d9bfb7;
@@ -200,4 +184,8 @@ table.userdelete br {
 }
 .delbuttons {
 	text-align: center;
+}
+.sage {
+    color:#FF0000;
+    font-weight: bold;
 }

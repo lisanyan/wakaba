@@ -18,13 +18,12 @@ a:hover {
 .adminbar a {
     font-weight: bold;
 }
-.logo {
-    clear: both;
-    text-align: left;
-    font-size: 2em;
-    font-weight: bold;
+.boardname, .caption {
     color: #FF6600;
-    /*width:100%;*/
+	font-size: 2em;
+	font-weight: bold;
+	margin-top: 0.5em;
+    clear: both;
 }
 .theader,
 .passvalid {
@@ -189,4 +188,8 @@ table td {
 .spoiler a:hover {
     background: #CCCCCC;
     color: #333333;
+}
+.sage {
+    color:#FF0000;
+    font-weight: bold;
 }

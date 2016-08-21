@@ -14,10 +14,10 @@ use constant SQL_TABLE_IMG => 'board_img';			# Table (NOT DATABASE) used by imag
 use constant BOARD_IDENT => 'board';
 
 # Page look
-use constant TITLE => 'Wakaba image board';	# Name of this image board
-#use constant SHOWTITLETXT => 1;				# Show TITLE at top (1: yes  0: no)
-#use constant SHOWTITLEIMG => 0;				# Show image at top (0: no, 1: single, 2: rotating)
-#use constant TITLEIMG => 'title.jpg';			# Title image (point to a script file if rotating)
+use constant BOARD_NAME => 'Board'; # Name of this image board (without directory)
+# use constant BOARD_DESC => ''; # Board description
+use constant TITLE => 'Wakaba image board'; # Name of chan
+#use constant BANNER => 0; 						# Banner (1: yes, 0: no)
 #use constant FAVICON => 'wakaba.ico';			# Favicon.ico file
 #use constant HOME => '../';					# Site home directory (up one level by default
 #use constant IMAGES_PER_PAGE => 10;			# Images per page

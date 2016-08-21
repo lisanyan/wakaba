@@ -177,13 +177,14 @@ return 1 if(caller); # stop here if we're being called externally
 		my $as_staff=$query->param("as_staff");
 		my $postfix=$query->param("postfix");
 		my $ajax=$query->param("ajax");
+		my $admin_post=$query->param("admin_post");
 		my @files=$query->param("file");
 
 		post_stuff(
 			$parent,$spam1,$spam2,$name,$email,
 			$subject,$comment,$password,
 			$nofile,$captcha,$admin,$no_captcha,$no_format,
-			$as_staff,$postfix,$ajax,@files
+			$as_staff,$postfix,$ajax,$admin_post,@files
 		);
 	}
 	elsif($task eq "delete" or $task eq decode_string(S_DELETE,CHARSET))
@@ -581,11 +582,12 @@ sub build_thread_cache($)
 	print_page($filename,PAGE_TEMPLATE->(
 		thread=>$thread,
 		locked=>$locked,
+		title=>$thread[0]{subject},
 		postform=>((ALLOW_TEXT_REPLIES or ALLOW_IMAGE_REPLIES) and !$locked),
 		image_inp=>ALLOW_IMAGE_REPLIES,
 		textonly_inp=>0,
 		dummy=>$thread[$#thread]{num},
-		threads=>[{posts=>\@thread}])
+		threads=>[{posts=>\@thread}]),
 	);
 
 	# now build the json file
@@ -1062,6 +1064,8 @@ sub get_boardconfig {
 
     my %boardinfo = (
         board_title => TITLE,
+		board_ident => BOARD_IDENT,
+		board_desc => BOARD_DESC,
         config => {
             names_allowed => !FORCED_ANON,
             posting_allowed => (ALLOW_TEXT_REPLIES or ALLOW_IMAGE_REPLIES),
@@ -1069,7 +1073,7 @@ sub get_boardconfig {
             image_op => ALLOW_IMAGES,
             max_res => MAX_RES,
             max_field_length => MAX_FIELD_LENGTH,
-            max_comment_bytesize => MAX_COMMENT_LENGTH,
+            max_comment_length => MAX_COMMENT_LENGTH,
 			max_files => MAX_FILES,
             default_name => S_ANONAME,
             captcha => ENABLE_CAPTCHA,
@@ -1096,7 +1100,7 @@ sub post_stuff
 		$parent,$spam1,$spam2,$name,$email,
 		$subject,$comment,$password,
 		$nofile,$captcha,$admin,$no_captcha,$no_format,
-		$as_staff,$postfix,$ajax,@files
+		$as_staff,$postfix,$ajax,$adminpost,@files
 	)=@_;
 
 	my ($locked,$autosage);
@@ -1117,6 +1121,7 @@ sub post_stuff
 	if($admin) # check admin password - allow both encrypted and non-encrypted
 	{
 		$admin_post = 1;
+		$adminpost = 1 if $adminpost;
 	}
 	else
 	{
@@ -1144,10 +1149,7 @@ sub post_stuff
 	make_error(S_UNUSUAL) if($subject=~/[\n\r]/);
 
 	# check for excessive amounts of text
-	make_error(S_TOOLONG) if(length($name)>MAX_FIELD_LENGTH);
-	make_error(S_TOOLONG) if(length($email)>MAX_FIELD_LENGTH);
-	make_error(S_TOOLONG) if(length($subject)>MAX_FIELD_LENGTH);
-	make_error(S_TOOLONG) if(length($comment)>MAX_COMMENT_LENGTH);
+	make_error(S_TOOLONG) if(length(decode_string($comment,CHARSET))>MAX_COMMENT_LENGTH);
 
 	# check to make sure the user selected a file, or clicked the checkbox
 	make_error(S_NOPIC) if(!$parent and !$file and !$nofile and !$admin_post);
@@ -1160,7 +1162,6 @@ sub post_stuff
 	else           { $as_staff = 0; };
 
 	# get file size, and check for limitations.
-	# my $size=get_file_size($file) if($file);
 	my @size;
 	for (my $i = 0; $i < MAX_FILES; $i++) {
 		$size[$i] = get_file_size($files[$i]) if ($files[$i]);
@@ -1242,6 +1243,11 @@ sub post_stuff
 	$email=clean_string(decode_string($email,CHARSET));
 	$subject=clean_string(decode_string($subject,CHARSET));
 
+	# check for excessive amounts of text
+	make_error(S_TOOLONG) if(length($name)>MAX_FIELD_LENGTH);
+	make_error(S_TOOLONG) if(length($email)>MAX_FIELD_LENGTH);
+	make_error(S_TOOLONG) if(length($subject)>MAX_FIELD_LENGTH);
+
 	# fix up the email/link
 	$email="mailto:$email" if $email and $email!~/^$protocol_re:/;
 
@@ -1261,10 +1267,10 @@ sub post_stuff
 	# Manager and deletion stuff - duuuuuh?
 
 	# generate date
-	my $date=make_date($time,DATE_STYLE);
+	# my $date=make_date($time,DATE_STYLE);
 
 	# generate ID code if enabled
-	$date.=' ID:'.make_id_code($ip,$time,$email) if(DISPLAY_ID);
+	# $date.=' ID:'.make_id_code($ip,$time,$email) if(DISPLAY_ID);
 
 	# copy file, do checksums, make thumbnail, etc
     my (@filename, @md5, @width, @height, @thumbnail, @tn_width, @tn_height, @info, @info_all, @uploadname);
@@ -1287,9 +1293,9 @@ sub post_stuff
 	}
 
 	# finally, write to the database
-	my $sth=$dbh->prepare("INSERT INTO ".SQL_TABLE." VALUES(null,?,?,?,?,?,?,?,?,?,?,?,null,?,?,?);") or make_sql_error();
+	my $sth=$dbh->prepare("INSERT INTO ".SQL_TABLE." VALUES(null,?,?,?,?,?,?,?,?,?,?,null,?,?,?);") or make_sql_error();
 	$sth->execute($parent,$time,$lasthit,$numip,
-	$date,$name,$trip,$email,$subject,$password,$comment,
+	$name,$trip,$email,$subject,$password,$comment,
 	$as_staff,$autosage,$locked) or make_sql_error();
 
 	# find out what our new thread number is
@@ -1346,10 +1352,19 @@ sub post_stuff
 	-charset=>CHARSET,-autopath=>COOKIE_PATH); # yum!
 
 	if(!$ajax) {
-		# redirect to the appropriate page
-		if($parent) { make_http_forward(get_board_id().'/'.RES_DIR.$parent.PAGE_EXT.($num?"#$num":"")); }
-		elsif($num)	{ make_http_forward(get_board_id().'/'.RES_DIR.$num.PAGE_EXT); }
-		else { make_http_forward(get_board_id().'/'.HTML_SELF); } # shouldn't happen
+		if(!$adminpost)
+		{
+			# redirect to the appropriate page
+			if($parent) { make_http_forward(get_board_id().'/'.RES_DIR.$parent.PAGE_EXT.($num?"#$num":"")); }
+			elsif($num)	{ make_http_forward(get_board_id().'/'.RES_DIR.$num.PAGE_EXT); }
+			else { make_http_forward(get_board_id().'/'.HTML_SELF); } # shouldn't happen
+		}
+		else
+		{
+			if($parent) { make_http_forward(get_script_name().'?task=mpanel&board='.get_board_id()."&page=t".$parent.($num?"#$num":"")); }
+			elsif($num) { make_http_forward(get_script_name().'?task=mpanel&board='.get_board_id()."&page=t".$parent); }
+			else { make_http_forward(get_script_name().'?task=mpanel&board='.get_board_id()); }
+		}
 	}
     else {
         make_json_header();
@@ -1575,27 +1590,27 @@ sub format_comment($)
 {
 	my ($comment)=@_;
 
-	# hide >>1 references from the quoting code
-	$comment=~s/&gt;&gt;([0-9\-]+)/&gtgt;$1/g;
+    # hide >>1 references from the quoting code
+    $comment =~ s/&gt;&gt;([0-9\-]+)/&gtgt;$1/g;
+    $comment =~ s|&gt;&gt;(/[\wäöü]+/[0-9\-]+)|&gtgt;$1|g;
 
-	my $handler=sub # fix up >>1 references
-	{
-		my $line=shift;
+	my $handler=sub # mark >>1 references
+    {
+        my $line = shift;
 
-		$line=~s!&gtgt;([0-9]+)!
-			my $res=get_post($1);
-			if($res) { '<a href="'.get_reply_link($$res{num},$$res{parent}).'" onclick="highlight('.$1.')">&gt;&gt;'.$1.'</a>' }
-			else { "&gt;&gt;$1"; }
-		!ge;
+		# references are prefixed with a html comment and will be resolved on
+		# every page creation to support links to deleted (and also future) posts
+		$line =~ s/&gtgt;([0-9]+)/<!--reflink-->&gt;&gt;$1/g;
+		$line =~ s|&gtgt;(/[\wäöü]+/[0-9]+)|<!--reflink-->&gt;&gt;$1|g;
 
-		return $line;
-	};
+        return $line;
+    };
 
 	if(ENABLE_WAKABAMARK) { $comment=do_wakabamark($comment,$handler) }
 	else { $comment="<p>".simple_format($comment,$handler)."</p>" }
 
 	# fix <blockquote> styles for old stylesheets
-	# $comment=~s/<blockquote>/<blockquote class="unkfunc">/g;
+	$comment=~s/<blockquote>/<blockquote class="unkfunc">/g;
 
 	# restore >>1 references hidden in code blocks
 	$comment=~s/&gtgt;/&gt;&gt;/g;
@@ -1623,17 +1638,17 @@ sub simple_format($@)
 }
 
 sub resolve_reflinks {
-    my ($comment) = @_;
+    my ($comment,$admin) = @_;
 
-    $comment =~ s|<!--reflink-->&gt;&gt;&gt;\/?([A-Za-z0-9-]+)/([0-9]+)|
-        my $res = get_post_ref($2,$1);
-        if ($res) { '<span class="backreflink"><a href="'.get_reply_link($$res{num},$$res{parent},$1).'">&gt;&gt;/'.$1.'/'.$2.'</a></span>'; }
-        else { '<span class="backreflink"><del>&gt;&gt;/'.$1.'/'.$2.'</del></span>'; }
-    |ge;
+	$comment =~ s|<!--reflink-->&gt;&gt;/([\wäöü]+)/([0-9]+)|
+		my $res = get_board_post($1,$2);
+		if ($res) { '<span class="backreflink"><a href="'.get_reply_link($$res{num},$$res{parent},$admin,$1).'">&gt;&gt;/'.$1.'/'.$2.'</a></span>' }
+		else { '<span class="backreflink"><del>&gt;&gt;/'.$1.'/'.$2.'</del></span>'; }
+	|e for 1 .. 10;
 
     $comment =~ s|<!--reflink-->&gt;&gt;([0-9]+)|
         my $res = get_post_ref($1);
-        if ($res) { '<span class="backreflink"><a href="'.get_reply_link($$res{num},$$res{parent}).'">&gt;&gt;'.$1.'</a></span>'; }
+        if ($res) { '<span class="backreflink"><a href="'.get_reply_link($$res{num},$$res{parent},$admin).'" onclick="highlight('.$1.')">&gt;&gt;'.$1.'</a></span>'; }
         else { '<span class="backreflink"><del>&gt;&gt;'.$1.'</del></span>'; }
     |ge;
 
@@ -1725,10 +1740,29 @@ sub get_post_ref($;$)
         "SELECT num,parent FROM " . $tbl . " WHERE num=?;"
     ) or make_sql_error();
     $sth->execute($thread) or make_sql_error();
-    $ret = $sth->fetchrow_hashref();
-    $sth->finish();
+    return $sth->fetchrow_hashref();
+}
 
-    return $ret;
+sub get_board_post {
+	my ($board, $post) = @_;
+	my ($sth,$contents);
+	$board=~s/[\*<>|?&]//g; # remove special characters
+	$board=~s/.*[\\\/]//; # remove any leading path
+
+	my $cfgfile=$board . "/config.pl";
+	return 0 unless(-d $board and -f $cfgfile);
+
+	open BOARDCFG, $cfgfile or return 0;
+	$contents.=$_ while (<BOARDCFG>);
+	close BOARDCFG;
+
+	if ($contents=~/^\s*use\s+constant\s+SQL_TABLE\s*=>\s*(?:'|")([^'"]+)(?:'|")\s*;/m)
+	{
+		$sth=$dbh->prepare("SELECT num, parent FROM ".$1." WHERE num=?;") or make_sql_error();
+		$sth->execute($post) or make_sql_error();
+		return $sth->fetchrow_hashref;
+	}
+	return 0;
 }
 
 sub sage_count($)
@@ -2021,13 +2055,19 @@ sub delete_stuff($$$$$$$@)
 		my $redir;
 
 		if ( $noko == 1 and $parent )
-		{ $redir = get_board_id() . '/' . RES_DIR . $parent . PAGE_EXT; }
+		{
+			if($adminDel) { $redir = get_script_name().'?task=mpanel&board='.get_board_id().'&page=t'.$parent }
+			else { $redir = get_board_id() . '/' . RES_DIR . $parent . PAGE_EXT };
+		}
 		else
-		{ $redir = get_board_id().'/'.HTML_SELF; }
+		{
+			if($adminDel) { $redir = get_script_name().'?task=mpanel&board='.get_board_id() }
+			else { $redir = get_board_id().'/'.HTML_SELF; }
+		}
 
 		if($ajax) {
 			make_json_header();
-			print $JSON->encode({redir => get_board_id().'/'.HTML_SELF});
+			print $JSON->encode({redir => $redir});
 		}
 		else
 		{ make_http_forward($redir); }
@@ -2147,8 +2187,8 @@ sub delete_post($$$$$;$$)
 
             while ( $res = $sth->fetchrow_hashref() ) {
 				# delete images if they exist
-				unlink BOARD_IDENT . '/' . IMG_DIR . $$res{image};
-				unlink BOARD_IDENT . '/' . THUMB_DIR . $$res{thumbnail} if($$res{thumbnail}=~/^$thumb/);
+				unlink BOARD_IDENT . '/' . $$res{image};
+				unlink BOARD_IDENT . '/' . $$res{thumbnail} if($$res{thumbnail}=~/^$thumb/);
             }
 
 			$sth = $dbh->prepare( "UPDATE "
@@ -2285,61 +2325,154 @@ sub make_admin_login()
 	print encode_string(ADMIN_LOGIN_TEMPLATE->());
 }
 
-sub make_admin_post_panel($;$)
+sub make_admin_post_panel($$)
 {
-	my ($admin,$page)=@_;
-	my ($sth,$row,@posts,$rowtype);
-	$page=0 if(!$page);
+	my ($admin, $page)=@_;
+	my ($sth,$row,$output,@threads);
+	my $isAdmin = 0;
+	$page = 0 if $page!~/^t?\d+/ || !$page;
 
-	check_password($admin,'');
-
-	$sth=$dbh->prepare("SELECT * FROM ".SQL_TABLE." ORDER BY lasthit DESC,CASE parent WHEN 0 THEN num ELSE parent END ASC,num ASC;") or make_sql_error();
-	$sth->execute() or make_sql_error();
-
-	# $size=0;
-	$rowtype=1;
-
-	my $minthreads=$page*IMAGES_PER_PAGE;
-	my $maxthreads=$minthreads+IMAGES_PER_PAGE;
-	my $threadcount=0;
-
-	my ($pc,$size) = count_posts();
-
-	while($row=get_decoded_hashref($sth))
+	if(check_password($admin, ''))
 	{
-		if(!$$row{parent}) { $threadcount++; }
+		$isAdmin=1;
+	}
 
-		if($threadcount>$minthreads and $threadcount<=$maxthreads)
+	my ($posts, $size) = count_posts();
+
+	# Grab board posts
+	if ($page =~ /^t\d+$/)
+	{
+		$page =~ s/^t//g;
+		$sth=$dbh->prepare("SELECT * FROM ".SQL_TABLE." WHERE num=? OR parent=? ORDER BY lasthit DESC, num ASC;") or make_sql_error();
+		$sth->execute($page,$page) or make_sql_error();
+
+		$row = get_decoded_hashref($sth);
+		make_error("Thread does not exist") if !$row;
+		my @thread;
+		push @thread, $row;
+		while ($row=get_decoded_hashref($sth))
 		{
-			if(!$$row{parent}) { $rowtype=1; }
-			else { $rowtype^=3; }
-			$$row{rowtype}=$rowtype;
-			add_images_to_row($row);
-			$$row{comment} = resolve_reflinks($$row{comment});
+			$$row{comment} = resolve_reflinks($$row{comment}, $isAdmin);
+			push @thread, $row;
+		}
+		add_images_to_thread(@thread);
+		push @threads,{posts=>[@thread]};
 
-			push @posts,$row;
+		$output = encode_string(POST_PANEL_TEMPLATE->(
+			admin=>$isAdmin,
+			postform=>(ALLOW_TEXTONLY or ALLOW_IMAGES),
+			image_inp=>ALLOW_IMAGES,
+			textonly_inp=>0,
+			thread=>$page,
+			locked=>$thread[0]{locked},
+			parent=>$page,
+			threads=>\@threads,
+			size=>$size,
+			title=>$thread[0]{subject},
+		));
+	}
+	else
+	{
+		# Grab count of threads
+		my $threadcount = count_threads();
+
+		# Handle page variable
+		my $last_page = int(($threadcount + IMAGES_PER_PAGE - 1) / IMAGES_PER_PAGE)-1;
+		$page = $last_page if (($page) * IMAGES_PER_PAGE > $threadcount);
+		$page = 0 if ($page !~ /^\w+$/);
+		my $thread_offset = $page * (IMAGES_PER_PAGE);
+
+		# Grab the parent posts
+		$sth=$dbh->prepare(
+			  "SELECT ".SQL_TABLE.".* FROM "
+			  .SQL_TABLE
+			  ." WHERE parent=0 ORDER BY lasthit DESC, ".SQL_TABLE.".num ASC LIMIT ".IMAGES_PER_PAGE." OFFSET $thread_offset;"
+			) or make_sql_error();
+		$sth->execute() or make_sql_error();
+
+		# Grab the thread posts in each thread
+		while ($row=get_decoded_hashref($sth))
+		{
+			# should be first
+			$$row{comment} = resolve_reflinks($$row{comment}, $isAdmin);
+			add_images_to_row($row);
+
+			my @thread = ($row);
+			my $threadnumber = $$row{num};
+			my $max_replies = $$row{locked} ? REPLIES_PER_LOCKED_THREAD : REPLIES_PER_THREAD;
+
+			# Grab thread replies
+			my $postcountquery=
+				$dbh->prepare(
+					"SELECT ( SELECT COUNT(num) FROM ".SQL_TABLE." WHERE parent=? ) AS pcount, ( SELECT COUNT(image) FROM ".SQL_TABLE_IMG." WHERE thread=?) AS icount FROM dual"
+				) or make_sql_error();
+			$postcountquery->execute($threadnumber,$threadnumber) or make_sql_error();
+			my $postcountrow = $postcountquery->fetchrow_hashref();
+			my $postcount = $$postcountrow{pcount};
+			my $imgcount = $$postcountrow{icount};
+			$postcountquery->finish();
+
+			# Grab limits for SQL query
+			my $offset = ($postcount > $max_replies) ? ($postcount - $max_replies) : 0;
+			my $limit = $max_replies;
+			my $shownimages = 0;
+			my $curr_posts = 0;
+
+			foreach my $post (@thread) {
+				$shownimages += @{$$row{files}} if (exists $$row{files});
+			}
+
+			my $threadquery=$dbh->prepare("SELECT * FROM ".SQL_TABLE." WHERE parent=? ORDER BY lasthit DESC, num ASC LIMIT $limit OFFSET $offset;") or make_sql_error();
+			$threadquery->execute($threadnumber) or make_sql_error();
+			while (my $inner_row=get_decoded_hashref($threadquery))
+			{
+				add_images_to_row($inner_row);
+				$$inner_row{comment} = resolve_reflinks($$inner_row{comment}, $isAdmin);
+				my $abbreviation=abbreviate_html($$inner_row{comment},MAX_LINES_SHOWN,APPROX_LINE_LENGTH);
+				if($abbreviation)
+				{
+	                $$inner_row{abbrev} = get_abbrev_message(count_lines($$inner_row{comment}) - count_lines($abbreviation));
+	                $$inner_row{comment_full} = $$inner_row{comment};
+	                $$inner_row{comment} = $abbreviation;
+	            }
+				$curr_posts++;
+				push @thread, $inner_row;
+			}
+			$threadquery->finish();
+
+			push @threads,{posts=>[@thread],omitmsg=>get_omit_message(($postcount > $curr_posts) ? $postcount-$curr_posts : 0,($imgcount > $shownimages) ? $imgcount-$shownimages : 0)};
 		}
 
-		$size+=$$row{size};
+		$sth->finish();
+
+		# make the list of pages
+		my @pages=map +{ page=>$_ },(0..$last_page);
+		foreach my $p (@pages)
+		{
+			if($$p{page}==0) { $$p{filename}=get_script_name().'?task=mpanel&amp;board='.get_board_id() } # first page
+			else { $$p{filename}=get_script_name().'?task=mpanel&amp;board='.get_board_id().'&amp;page='.$$p{page} }
+			if($$p{page}==$page) { $$p{current}=1 } # current page, no link
+		}
+
+		my ($prevpage,$nextpage);
+		$prevpage=$page-1 if($page!=0);
+		$nextpage=$page+1 if($page!=$last_page);
+
+		$output = encode_string(POST_PANEL_TEMPLATE->(
+			admin=>$isAdmin,
+			postform=>(ALLOW_TEXTONLY or ALLOW_IMAGES),
+			image_inp=>ALLOW_IMAGES,
+			textonly_inp=>(ALLOW_IMAGES and ALLOW_TEXTONLY),
+			threads=>\@threads,
+			pages=>\@pages,
+			size=>$size,
+		));
 	}
-
-	# Are we on a non-existent page?
-	if($page!=0 and $page>($threadcount-1)/IMAGES_PER_PAGE)
-	{
-		make_http_forward(get_script_name()."?task=mpanel&page=0&board=".get_board_id());
-		return;
-	}
-
-	my @pages=map +{ page=>$_,current=>$_==$page,url=>escamp(get_script_name()."?task=mpanel&page=$_&board=".get_board_id()) },0..($threadcount-1)/IMAGES_PER_PAGE;
-
-	my ($prevpage,$nextpage);
-	$prevpage=$page-1 if($page!=0);
-	$nextpage=$page+1 if($page<$#pages);
-
 	make_http_header();
-	print encode_string(POST_PANEL_TEMPLATE->(admin=>$admin,posts=>\@posts,size=>$size,pages=>\@pages,next=>$nextpage,prev=>$prevpage));
+	$output =~ s/^\s+//; # remove whitespace at the beginning
+	$output =~ s/^\s+\n//mg; # remove empty lines
+	print($output);
 }
-
 
 sub make_admin_ban_panel($)
 {
@@ -2812,14 +2945,15 @@ sub get_secure_script_name()
 	return $ENV{SCRIPT_NAME};
 }
 
-sub expand_filename($)
+sub expand_filename($;$)
 {
-	my ($filename)=@_;
+	my ($filename,$board)=@_;
 	return $filename if($filename=~m!^/!);
 	return $filename if($filename=~m!^\w+:!);
 
+	$board = get_board_id() unless $board;
 	my ($self_path)=$ENV{SCRIPT_NAME}=~m!^(.*/)[^/]+$!;
-	return $self_path.get_board_id().'/'.$filename;
+	return $self_path.$board.'/'.$filename;
 }
 
 sub root_path_to_filename($)
@@ -2839,14 +2973,18 @@ sub expand_image_filename($)
 	return expand_filename(clean_path($filename));
 }
 
-sub get_reply_link($$;$)
+sub get_reply_link($$;$$)
 {
-	my ($reply,$parent,$board)=@_;
+	my ($reply,$parent,$admin,$board)=@_;
 
-    $board=(-d $board)?"/$board/":"";
+	if($admin)
+	{
+		return get_script_name().'?task=mpanel&board='.get_board_id()."&page=t".$parent.'#'.$reply if($parent);
+		return get_script_name().'?task=mpanel&board='.get_board_id()."&page=t".$reply;
+	}
 
-	return expand_filename($board.RES_DIR.$parent.PAGE_EXT).'#'.$reply if($parent);
-	return expand_filename($board.RES_DIR.$reply.PAGE_EXT);
+	return expand_filename(RES_DIR.$parent.PAGE_EXT, $board).'#'.$reply if($parent);
+	return expand_filename(RES_DIR.$reply.PAGE_EXT, $board);
 }
 
 sub get_page_count(;$)
@@ -2942,7 +3080,6 @@ sub init_database()
 	"lasthit INTEGER,".			# Last activity in thread. Must be set to the same value for BOTH the original post and all replies!
 	"ip TEXT,".					# IP number of poster, in integer form!
 
-	"date TEXT,".				# The date, as a string
 	"name TEXT,".				# Name of the poster
 	"trip TEXT,".				# Tripcode (encoded)
 	"email TEXT,".				# Email address
@@ -2950,7 +3087,7 @@ sub init_database()
 	"password TEXT,".			# Deletion password (in plaintext)
 	"comment TEXT,".			# Comment text, HTML encoded.
 
-	"banned INTEGER,".       # Post was made by a staff member
+	"banned INTEGER,".          # Post was made by a staff member
 	"adminpost INTEGER,".       # Post was made by a staff member
 	"autosage INTEGER,".        # Flag to indicate that thread is on bump limit
 	"locked INTEGER,".          # Thread is locked (applied to parent post only)
@@ -3132,7 +3269,7 @@ sub count_threads()
 sub count_posts(;$)
 {
     my ($parent) = @_;
-    my ($sth, $where, $count, $size);
+    my ($sth, $where, $count, $size, $imgcount);
 
     $where = " WHERE parent=$parent or num=$parent" if ($parent);
     $sth = $dbh->prepare(
@@ -3143,12 +3280,12 @@ sub count_posts(;$)
 
     $where = " WHERE thread=$parent" if ($parent);
     $sth = $dbh->prepare(
-        "SELECT sum(size) FROM " . SQL_TABLE_IMG . "$where;" )
+        "SELECT sum(size), count(image) FROM " . SQL_TABLE_IMG . "$where;" )
       or make_sql_error();
     $sth->execute() or make_sql_error();
-	$size = ($sth->fetchrow_array())[0];
+	($size,$imgcount) = ($sth->fetchrow_array());
 
-    return ($count, $size);
+    return ($count, $size, $imgcount);
 }
 
 sub thread_exists($)
@@ -3234,7 +3371,7 @@ sub update_db_schema
    while(my $row = get_decoded_hashref($sth))
    {
 	   my $comment = $$row{comment};
-	   $comment =~s!<a href="/[\wöäü]+/res/\d+.html(#\d+)?" onclick="highlight\(\d+\)">&gt;&gt;(\d+)</a>!<\!--reflink-->&gt;&gt;$2!sg;
+	   $comment =~s!<a href="/[\wäöü]+/res/\d+.html(#\d+)?" onclick="highlight\(\d+\)">&gt;&gt;(\d+)</a>!<\!--reflink-->&gt;&gt;$2!sg;
        my $upd = $dbh->prepare("UPDATE ".SQL_TABLE." SET comment=? WHERE num=?") or make_sql_error('migrate');
 	   $upd->execute($comment, $$row{num});
    }
@@ -3242,7 +3379,7 @@ sub update_db_schema
 # remove unneeded columns from comments table, rename column, add banned column
    $sth = $dbh->prepare(
 		"ALTER TABLE " . SQL_TABLE . " DROP image, DROP size, DROP md5, DROP width, DROP height, DROP thumbnail,
-		DROP tn_width, DROP tn_height, DROP origname;"
+		DROP tn_width, DROP tn_height, DROP origname, DROP date;"
    ) or make_sql_error('migrate');
    $sth->execute() or make_sql_error('migrate');
 

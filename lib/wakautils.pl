@@ -900,10 +900,12 @@ sub process_tripcode($;$$$$)
 
 sub make_date($$;@)
 {
-	my ($time,$style,@locdays)=@_;
+	my ($time,$style,$locdays,$locmonths)=@_;
 	my @days=qw(Sun Mon Tue Wed Thu Fri Sat);
 	my @months=qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-	@locdays=@days unless(@locdays);
+    my @fullmonths=qw(January February March April May June July August September October November December);
+	@days=split(' ', $locdays) if $locdays;
+	@fullmonths=split(' ', $locmonths) if $locmonths;
 
 	if($style eq "2ch")
 	{
@@ -917,7 +919,18 @@ sub make_date($$;@)
 		my @ltime=localtime($time);
 
 		return sprintf("%02d/%02d/%02d(%s)%02d:%02d",
-		$ltime[5]-100,$ltime[4]+1,$ltime[3],$locdays[$ltime[6]],$ltime[2],$ltime[1]);
+		$ltime[5]-100,$ltime[4]+1,$ltime[3],$days[$ltime[6]],$ltime[2],$ltime[1]);
+	}
+	elsif ($style eq "phutaba-en") {
+		my @ltime = localtime($time);
+
+		return sprintf("%s %d, %d (%s.) %02d:%02d:%02d",
+			$fullmonths[$ltime[4]],
+			$ltime[3],
+			$ltime[5] + 1900,
+			$days[$ltime[6]],
+			$ltime[2], $ltime[1], $ltime[0]
+		);
 	}
 	elsif($style eq "localtime")
 	{
@@ -1029,6 +1042,15 @@ sub dec_to_dot
 
 	return ip_compress_address(ip_bintoip(ip_inttobin($ip, 6), 6), 6) if (length(pack('w', $ip)) > 5); # IPv6
     return join('.', unpack('C4', pack('N', $ip))); # IPv4
+}
+
+sub get_mask_len
+{
+	my $ip = $_[0];
+	$ip = dec_to_dot($ip) if ($ip =~ /^(\d+)$/);
+	my $mask = new Net::IP($ip) or die(Net::IP::Error());
+	my ($bits) = $mask->binip() =~ /^(1+)/;
+	return length($bits);
 }
 
 sub mask_ip

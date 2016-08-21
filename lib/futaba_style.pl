@@ -10,8 +10,9 @@ use constant NORMAL_HEAD_INCLUDE => q{
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title><if $title><var $title> - </if><const TITLE></title>
 <meta charset="<const CHARSET>" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title><const TITLE> &raquo; <if $title><var $title></if><if !$title>/<const BOARD_IDENT>/ - <const BOARD_NAME></if></title>
 <link rel="shortcut icon" href="<var FAVICON>" />
 
 <link rel="stylesheet" type="text/css" href="<var root_path_to_filename('static/wakaba.css')>" />
@@ -20,9 +21,14 @@ use constant NORMAL_HEAD_INCLUDE => q{
 
 <script type="text/javascript">
 var style_cookie="<const STYLE_COOKIE>";
+var thread_cookie = "<const BOARD_IDENT>_hidden_threads";
 var board = '<const BOARD_IDENT>', thread_id = <if $thread><var $thread></if><if !$thread>null</if>;
 var filetypes = '<var get_filetypes()>';
-var msg_remove_file = '<const S_JS_REMOVEFILE>';
+var js_lang = {
+	msg_remove_file: '<const S_JS_REMOVEFILE>',
+	msg_hide_thread: '<const S_JS_HIDETHREAD>',
+	msg_show_thread: '<const S_JS_SHOWTHREAD>'
+};
 </script>
 <script type="text/javascript" src="<var root_path_to_filename('static/js/wakaba3.js')>"></script>
 </head>
@@ -41,12 +47,18 @@ var msg_remove_file = '<const S_JS_REMOVEFILE>';
 [<a href="<var get_secure_script_name()>?task=admin&amp;board=<var get_board_id()>"><const S_ADMIN></a>]
 </div>
 
-<div class="logo">
-<if SHOWTITLEIMG==1><img src="<var root_path_to_filename(TITLEIMG)>" alt="<const TITLE>" /></if>
-<if SHOWTITLEIMG==2><img src="<var root_path_to_filename(TITLEIMG)>" onclick="this.src=this.src;" alt="<const TITLE>" /></if>
-<if SHOWTITLEIMG and SHOWTITLETXT><br /></if>
-<if SHOWTITLETXT><const TITLE></if>
-</div><hr />
+<div class="header">
+  <if BANNER>
+	<div class="banner">
+		<a href="/<const BOARD_IDENT>/">
+			<img src="/banner.pl?board=<var get_board_id()>" alt="Banner" />
+		</a>
+	</div>
+  </if>
+	<div class="boardname" <if BOARD_DESC>style="margin-bottom: 5px;"</if>>/<const BOARD_IDENT>/ &ndash; <const BOARD_NAME></div>
+	<if BOARD_DESC><div class="slogan">&bdquo;<const BOARD_DESC>&ldquo;</div></if>
+</div>
+<hr />
 };
 
 use constant NORMAL_FOOT_INCLUDE => include("include/footer.html").q{
@@ -103,6 +115,12 @@ use constant PAGE_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 <if $locked>
 [<a href="<var expand_filename(HTML_SELF)>"><const S_RETURN></a>]
 <p class="locked"><var sprintf S_THREADLOCKED, $thread></p>
+</if>
+
+<if !$thread>
+	<script type="text/javascript">
+		var hiddenThreads=get_cookie(thread_cookie);
+	</script>
 </if>
 
 <hr />
@@ -355,11 +373,14 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <form id="postform" action="<var $self>" method="post" enctype="multipart/form-data">
 <input type="hidden" name="board" value="<const BOARD_IDENT>">
 <input type="hidden" name="task" value="post" />
-<input type="hidden" name="no_format" value="1" />
+<input type="hidden" name="nofile" value="on" />
+<input type="hidden" name="admin_post" value="yes" />
+<if $thread><input type="hidden" name="parent" value="<var $thread>" /></if>
 
 <table><tbody>
 <tr><td class="postblock"><const S_NAME></td><td><input type="text" name="field1" size="28" /></td></tr>
-<tr><td class="postblock"><const S_EMAIL></td><td><input type="text" name="field2" size="35" /><if !ALLOW_LINK><em> (sage only)</em></if></td></tr>
+<if !ALLOW_LINK && $thread><tr><td class="postblock"><const S_SAGE></td><td><label><input type="checkbox" name="field2" value="sage" /><const S_SAGEDESC></label></td></tr>
+<elsif ALLOW_LINK><tr><td class="postblock"><const S_EMAIL></td><td><input type="text" name="field2" size="28" /></td></tr></if>
 <tr><td class="postblock"><const S_SUBJECT></td><td><input type="text" name="field3" size="35" />
 <input type="submit" value="<const S_SUBMIT>" /></td></tr>
 <tr><td class="postblock"><const S_OPTIONS></td>
@@ -369,9 +390,7 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <tr><td class="postblock"><const S_COMMENT></td><td><textarea name="field4" cols="60" rows="6"></textarea></td></tr>
 <tr id="fileUploadField"><td class="postblock"><const S_UPLOADFILE> (max. <const MAX_FILES>)</td>
 <td id="fileInput"><div><input type="file" name="file" onchange="file_input_change(<const MAX_FILES>)" /></div>
-<if $textonly_inp>[<label><input type="checkbox" id="nofile" name="nofile" value="on" /><const S_NOFILE> ]</label></if>
 </td></tr>
-<tr><td class="postblock"><const S_PARENT></td><td><input type="text" name="parent" size="8" /></td></tr>
 <tr><td class="postblock"><const S_DELPASS></td><td><input type="password" name="password" size="8" /> <const S_DELEXPL></td></tr>
 </tbody></table></form></div>
 <script type="text/javascript">set_inputs("postform")</script>
@@ -379,10 +398,17 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 
 <div class="dellist"><const S_MANAPANEL></div>
 
-<form action="<var $self>" method="post">
+<if !$thread>
+	<script type="text/javascript">
+		var hiddenThreads=get_cookie(thread_cookie);
+	</script>
+</if>
+
+<form action="<var $self>" id="delform" method="post">
 <input type="hidden" name="board" value="<const BOARD_IDENT>">
 <input type="hidden" name="task" value="delete" />
 <input type="hidden" name="admindel" value="yes" />
+<if $thread><input type="hidden" name="parent" value="<var $thread>" /></if>
 
 <div class="delbuttons">
 <input type="submit" value="<const S_MPDELETE>" />
@@ -391,49 +417,14 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 [<label><input type="checkbox" name="fileonly" value="on" /><const S_MPONLYPIC></label>]
 </div>
 
-<table style="margin:0 auto;white-space: nowrap"><tbody>
-<tr class="managehead"><const S_MPTABLE></tr>
-
-<loop $posts>
-	<if !$parent><tr class="managehead"><th colspan="6"></th></tr></if>
-
-	<tr class="row<var $rowtype>">
-
-	<if !$image><td></if>
-	<if $image><td rowspan="2"></if>
-	<label><input type="checkbox" name="delete" value="<var $num>" /><span style="font-size: larger;"><strong><var $num></strong></span>&nbsp;&nbsp;</label></td>
-
-	<td><var make_date($timestamp,"tiny")></td>
-	<td><var clean_string(substr $subject,0,20)></td>
-	<if $adminpost><td><span class="adminname"><b><var clean_string(substr $name,0,30)><var $trip></b></span></td>
-	<else><td><b><var clean_string(substr $name,0,30)><var $trip></b></td></if>
-	<td><var clean_string(substr $comment,0,50)></td>
-	<td><var dec_to_dot($ip)>
-		[<a href="<var $self>?task=deleteall&amp;board=<var get_board_id()>&amp;ip=<var $ip>"><const S_MPDELETEALL></a>]
-		[<a href="<var $self>?task=addip&amp;board=<var get_board_id()>&amp;type=ipban&amp;ip=<var $ip>&amp;postid=<var $num>" onclick="return do_ban(this)"><const S_MPBAN></a>]
-		<if !$parent>
-			[<a href="<var $self>?board=<var get_board_id()>&amp;task=lock&amp;thread=<var $num>" title="<const S_MPLOCK>"><if $locked>-</if>L</a>]
-			[<a href="<var $self>?board=<var get_board_id()>&amp;task=kontra&amp;thread=<var $num>" title="<const S_MPAUTOSAGE>"><if $autosage>-</if>AS</a>]
-		</if>
-	</td>
-
-	</tr>
-	<if $files>
-	  <loop $files>
-		<tr class="row<var $rowtype>">
-		<td colspan="6">
-		<span class="hidden" id="imageinfo_<var md5_hex($image)>">
-			<strong><const S_FILENAME></strong> <var $uploadname><br /><hr />
-			<var get_pretty_html($info_all, "\n\t\t")>
-		</span><span class="file_admin">
-		<const S_PICNAME><a onmouseover="TagToTip('imageinfo_<var md5_hex($image)>', TITLE, '<const S_FILEINFO>', WIDTH, -450)" onmouseout="UnTip()" href="<var expand_filename(clean_path($image))>"><var $displayname></a>
-		(<var get_displaysize($size, DECIMAL_MARK)>, <var $width>x<var $height>)&nbsp; MD5: <var $md5>
-		</span></td></tr>
-	  </loop>
-	</if>
+<hr />
+<loop $threads>
+	<loop $posts>
+}.POST_VIEW_INCLUDE.q{
+	</loop>
+	</div>
+	<br style="clear:left" /><hr />
 </loop>
-
-</tbody></table>
 
 <div class="delbuttons">
 <input type="submit" value="<const S_MPDELETE>" />
@@ -444,6 +435,7 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 
 </form>
 
+<if !$thread>
 <table border="1" style="margin:0 auto"><tbody><tr>
 	<td>
 		<if defined $prev>
@@ -479,6 +471,7 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 		</if>
 	</td>
 </tr></tbody></table>
+</if>
 
 <br />
 
@@ -633,7 +626,7 @@ use constant BAN_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 		<td>IP</td>
 		<td><if $date><var make_date($date, '2ch')><else><em>undefined</em></if></td>
 		<td><if $expires><var make_date($expires, '2ch')><else><const S_BANEXPIRESNEVER></if></td>
-		<td><var dec_to_dot($ival1,$sval1)></td><td><var dec_to_dot($ival2,$sval1)></td>
+		<td><var dec_to_dot($ival1)></td><td>/<var get_mask_len($ival2)> (<var dec_to_dot($ival2)>)</td>
 	</if>
 	<if $type eq 'wordban'>
 		<td>Word</td>

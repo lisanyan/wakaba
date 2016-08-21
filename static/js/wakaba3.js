@@ -1,4 +1,9 @@
 // Wakaba
+var lang = {
+	thread: 'Thread ',
+	hidden: ' hidden',
+};
+
 function $each(arr, fn) {
 	for(var el, i = 0; el = arr[i++];)
 		fn(el);
@@ -126,7 +131,7 @@ function update_file_label(fileinput, max) {
 	span.innerHTML = ' <a class="hide" href="javascript:void(0)"'
 		+ ' onclick="del_file_input(this,' + max + ')">'
 		+ '<img src="/img/cancel.png" width="16" height="16" title="'
-		+ msg_remove_file + '" /></a> '
+		+ window.js_lang['msg_remove_file'] + '" /></a> '
 		+ display_file + '\n';
 }
 
@@ -356,6 +361,117 @@ function expand_image(element, org_width, org_height, thumb_width, thumb_height,
 	UnTip();
 	return false;
 }
+
+// Post hiding
+function threadHide(id)
+{
+	toggleHidden(id);
+	add_to_thread_cookie(id);
+}
+
+function threadShow(id)
+{
+	document.getElementById(id).style.display = "";
+
+	var threadInfo = id + "_info";
+	var parentform = document.getElementById("delform");
+	var obsoleteinfo = document.getElementById(threadInfo);
+	obsoleteinfo.setAttribute("id","");
+	var clearedinfo = document.createElement("div");
+	clearedinfo.style.cssFloat = "left";
+	clearedinfo.style.styleFloat = "left"; // Gee, thanks, IE.
+	parentform.replaceChild(clearedinfo,obsoleteinfo);
+	clearedinfo.setAttribute("id",threadInfo);
+
+	var hideThreadSpan = document.createElement("span");
+	var hideThreadLink = document.createElement("a");
+	hideThreadLink.setAttribute("href","javascript:threadHide('"+id+"')");
+	var hideThreadLinkText = document.createTextNode(window.js_lang['msg_hide_thread']);
+	hideThreadLink.appendChild(hideThreadLinkText);
+	hideThreadSpan.appendChild(hideThreadLink);
+
+	var oldSpan = document.getElementById(id+"_display");
+	oldSpan.setAttribute("id","");
+	parentform.replaceChild(hideThreadSpan,oldSpan);
+	hideThreadLink.setAttribute("id","toggle"+id);
+	hideThreadSpan.setAttribute("id",id+"_display");
+	hideThreadSpan.style.cssFloat = "right";
+	hideThreadSpan.style.styleFloat = "right";
+
+	remove_from_thread_cookie(id);
+}
+
+function add_to_thread_cookie(id)
+{
+	var hiddenThreadArray = get_cookie(thread_cookie);
+	if (hiddenThreadArray.indexOf(id + ",") != -1)
+	{
+		return;
+	}
+	else
+	{
+		set_cookie(thread_cookie, hiddenThreadArray + id + ",", 365);
+	}
+}
+
+function remove_from_thread_cookie(id)
+{
+	var hiddenThreadArray = get_cookie(thread_cookie);
+	var myregexp = new RegExp(id + ",", 'g');
+	hiddenThreadArray = hiddenThreadArray.replace(myregexp, "");
+	set_cookie(thread_cookie, hiddenThreadArray, 365);
+}
+
+function toggleHidden(id)
+{
+	var id_split = id.split("");
+	if (id_split[0] == "t")
+	{
+		id_split.reverse();
+		var shortenedLength = id_split.length - 1;
+		id_split.length = shortenedLength;
+		id_split.reverse();
+	}
+	else
+	{
+		id = "t" + id; // Compatibility with an earlier mod
+	}
+	if (document.getElementById(id))
+	{
+		document.getElementById(id).style.display = "none";
+	}
+	var thread_name = id_split.join("");
+	var threadInfo = id + "_info";
+	if (document.getElementById(threadInfo))
+	{
+		var hiddenNotice = document.createElement("em");
+		var hiddenNoticeText = document.createTextNode(lang.thread + thread_name + lang.hidden);
+		hiddenNotice.appendChild(hiddenNoticeText);
+
+		var hiddenNoticeDivision = document.getElementById(threadInfo);
+		hiddenNoticeDivision.appendChild(hiddenNotice);
+	}
+	var showThreadText = id + "_display";
+	if (document.getElementById(showThreadText))
+	{
+		var showThreadSpan = document.createElement("span");
+		var showThreadLink = document.createElement("a");
+		showThreadLink.setAttribute("href","javascript:threadShow('"+id+"')");
+		var showThreadLinkText = document.createTextNode(window.js_lang['msg_show_thread']);
+		showThreadLink.appendChild(showThreadLinkText);
+		showThreadSpan.appendChild(showThreadLink);
+
+		var parentform = document.getElementById("delform");
+		var oldSpan = document.getElementById(id+"_display");
+		oldSpan.setAttribute("id","");
+		parentform.replaceChild(showThreadSpan,oldSpan);
+		showThreadLink.setAttribute("id","toggle"+id);
+		showThreadSpan.setAttribute("id",id+"_display");
+		showThreadSpan.style.cssFloat = "right";
+		showThreadSpan.style.styleFloat = "right";
+	}
+}
+// Post hiding
 
 window.onunload=function(e)
 {

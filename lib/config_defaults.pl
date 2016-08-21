@@ -20,10 +20,10 @@ BEGIN {
 
 	eval "use constant USE_TEMPFILES => 1" unless(defined &USE_TEMPFILES);
 
-	eval "use constant TITLE => 'Wakaba image board'" unless(defined &TITLE);
-	eval "use constant SHOWTITLETXT => 1" unless(defined &SHOWTITLETXT);
-	eval "use constant SHOWTITLEIMG => 0" unless(defined &SHOWTITLEIMG);
-	eval "use constant TITLEIMG => 'title.jpg'" unless(defined &TITLEIMG);
+	eval "use constant TITLE => 'Wakachan'" unless(defined &TITLE);
+	eval "use constant BOARD_NAME => 'Image board'" unless(defined &BOARD_NAME);
+	eval "use constant BOARD_DESC => 'Image board'" unless(defined &BOARD_DESC);
+	eval "use constant BANNER => 0" unless(defined &BANNER);
 	eval "use constant FAVICON => '/wakaba.ico'" unless(defined &FAVICON);
 	eval "use constant HOME => '../'" unless(defined &HOME);
 	eval "use constant IMAGES_PER_PAGE => 10" unless(defined &IMAGES_PER_PAGE);
@@ -95,7 +95,7 @@ BEGIN {
 	eval "use constant CONVERT_CHARSETS => 1" unless(defined &CONVERT_CHARSETS);
 	eval "use constant TRIM_METHOD => 0" unless(defined &TRIM_METHOD);
 	eval "use constant ARCHIVE_MODE => 0" unless(defined &ARCHIVE_MODE);
-	eval "use constant DATE_STYLE => 'futaba'" unless(defined &DATE_STYLE);
+	eval "use constant DATE_STYLE => 'phutaba-en'" unless(defined &DATE_STYLE);
 	eval "use constant DISPLAY_ID => 0" unless(defined &DISPLAY_ID);
 	eval "use constant EMAIL_ID => 'Heaven'" unless(defined &EMAIL_ID);
 	eval "use constant TRIPKEY => '!'" unless(defined &TRIPKEY);

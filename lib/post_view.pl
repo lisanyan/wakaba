@@ -3,35 +3,56 @@
 use constant POST_VIEW_INCLUDE => q{
 <if !$parent && !$single>
 <div id="t<var $num>_info" style="float:left"></div>
+<if !$thread><span id="t<var $num>_display" style="float:right"><a href="javascript:threadHide('t<var $num>')" id="togglet<var $num>"><const S_HIDETHREAD></a><ins><noscript><br/>(Javascript Required.)</noscript></ins></span></if>
 <div id="t<var $num>">
 </if>
 
-<if $parent or $single>
-<table><tbody><tr><td class="doubledash">&gt;&gt;</td>
+<if $parent || $single>
+<table><tbody><tr>
+<td class="doubledash"><a href="<var get_reply_link($parent,0)>#<var $num>">&gt;&gt;</a></td>
 <td class="reply" id="reply<var $num>">
 </if>
 
 <a id="<var $num>"></a>
-<label><input type="checkbox" name="delete" value="<var $num>" />
-<if !$parent><span class="filetitle"><else><span class="replytitle"></if><var $subject></span>
-<if $email><span class="postername"><a href="<var $email>"><if $adminpost><span class="adminname"><var $name></span><else><var $name></if></a></span><if $trip><span class="postertrip"><a href="<var $email>"><var $trip></a></span></if></if>
-<if !$email><span class="postername"><if $adminpost><span class="adminname"><var $name></span><else><var $name></if></span><if $trip><span class="postertrip"><var $trip></span></if></if>
-<span class="posticons">
-<if !$parent>
-	<if $locked> <img src="<var root_path_to_filename('img/locked.png')>" alt="Locked" onmouseover="Tip('<const S_ICONLOCKED>')" onmouseout="UnTip()" /> </if>
-	<if $autosage> <img src="<var root_path_to_filename('img/autosage.gif')>" alt="<const S_LOCKEDALT>" onmouseover="Tip('<const S_ICONAUTOSAGE>')" onmouseout="UnTip()" /> </if>
-</if>
-<if $banned> <img src="<var root_path_to_filename('img/report.png')>" alt="Banned" onmouseover="Tip('<const S_BANNED>')" onmouseout="UnTip()" /> </if>
-</span>
-<span class="date"><var $date></span></label>
+
+<label>
+	<input type="checkbox" name="delete" value="<var $num>" />
+	<if !$parent><span class="filetitle"><else><span class="replytitle"></if><var $subject></span>
+	<if $email><span class="postername"><a href="<var $email>"><if $adminpost><span class="adminname"><var $name></span><else><var $name></if></a></span><if $trip><span class="postertrip"><a href="<var $email>"><var $trip></a></span></if><if DISPLAY_ID && !$adminpost><span class="posterid">ID: <var make_id_code(dec_to_dot($ip), $timestamp, $email)></span></if></span></if>
+	<if !$email><span class="postername"><if $adminpost><span class="adminname"><var $name><else><var $name></if></span><if $trip><span class="postertrip"><var $trip></span></if><if DISPLAY_ID && !$adminpost> <span class="posterid">ID: <var make_id_code(dec_to_dot($ip), $timestamp, $email)></span></if></span></if>
+	<span class="posticons">
+	<if !$parent>
+		<if $locked><img src="<var root_path_to_filename('img/locked.png')>" alt="Locked" onmouseover="Tip('<const S_ICONLOCKED>')" onmouseout="UnTip()" /> </if>
+		<if $autosage><img src="<var root_path_to_filename('img/autosage.gif')>" alt="<const S_LOCKEDALT>" onmouseover="Tip('<const S_ICONAUTOSAGE>')" onmouseout="UnTip()" /> </if>
+	</if>
+	<if $banned> <img src="<var root_path_to_filename('img/report.png')>" alt="Banned" onmouseover="Tip('<const S_BANNED>')" onmouseout="UnTip()" /> </if>
+	</span>
+	<span class="date"><var make_date($timestamp,DATE_STYLE,S_WEEKDAYS,S_MONTHS)></span>
+</label>
+
 <span class="reflink">
-<if !$parent>
-    <a href="<var get_reply_link($num,0)>#i<var $num>">No.<var $num></a>
-<else>
-    <a href="<var get_reply_link($parent,0)>#i<var $num>">No.<var $num></a>
+	<if !$parent>
+    	<a href="<var get_reply_link($num,0,$admin)>#i<var $num>">No.<var $num></a>
+	<else>
+    	<a href="<var get_reply_link($parent,0,$admin)>#i<var $num>">No.<var $num></a>
+	</if>
+</span>
+
+<if $admin>
+	<span>[<var dec_to_dot($ip)>]
+		[<a href="<var $self>?task=deleteall&amp;board=<var get_board_id()>&amp;ip=<var $ip>"><const S_MPDELETEALL></a>]
+		[<a href="<var $self>?task=addip&amp;board=<var get_board_id()>&amp;type=ipban&amp;ip=<var $ip>&amp;postid=<var $num>" onclick="return do_ban(this)"><const S_MPBAN></a>]
+		<if !$parent>
+			[<a href="<var $self>?board=<var get_board_id()>&amp;task=lock&amp;thread=<var $num>" title="<const S_MPLOCK>"><if $locked>-</if>L</a>]
+			[<a href="<var $self>?board=<var get_board_id()>&amp;task=kontra&amp;thread=<var $num>" title="<const S_MPAUTOSAGE>"><if $autosage>-</if>AS</a>]
+		</if>
+	</span>
+</if>&nbsp;
+
+<if !$parent && !$thread>
+	[<a href="<var get_reply_link($num,0,$admin)>"><if !$locked><const S_REPLY><else><const S_VIEW></if></a>]
 </if>
-</span>&nbsp;
-<if !$parent && !$thread>[<a href="<var get_reply_link($num,0)>"><if !$locked><const S_REPLY><else><const S_VIEW></if></a>]</if>
+
 <br />
 
 <if $files><div class="file_container"></if>
@@ -81,16 +102,30 @@ use constant POST_VIEW_INCLUDE => q{
 
 <div id="posttext_<var $num>"><blockquote>
 <var $comment>
-<if $abbrev><p class="abbrev">[<a href="<var get_reply_link($num,$parent)>" onclick="return expand_post('<var $num>')"><var $abbrev></a>]</p></if>
+<if $abbrev>
+	<p class="abbrev">[<a href="<var get_reply_link($num,$parent)>" onclick="return expand_post('<var $num>')"><var $abbrev></a>]</p>
+</if>
 </blockquote></div>
 
-<if !$parent && $omit>
-    <span class="omittedposts">
-    <var $omitmsg>
-    </span>
+<if !$parent>
+	<if $omitmsg>
+    	<span class="omittedposts">
+    		<var $omitmsg>
+    	</span>
+	</if>
+	<if !$thread>
+		<script type="text/javascript">
+			if (hiddenThreads.indexOf('t<var $num>,') != -1)
+			{
+				toggleHidden('t<var $num>');
+			}
+		</script>
+	</if>
 </if>
 
-<if $parent or $single></td></tr></tbody></table></if>
+<if $parent || $single>
+	</td></tr></tbody></table>
+</if>
 };
 
 1;
