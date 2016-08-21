@@ -80,8 +80,9 @@ use constant PAGE_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 	<tr><td class="postblock"><const S_COMMENT></td><td><textarea name="field4" cols="60" rows="6"></textarea></td></tr>
 
 	<if $image_inp>
-		<tr><td class="postblock"><const S_UPLOADFILE></td><td><input type="file" name="file" size="35" />
-		<if $textonly_inp>[<label><input type="checkbox" name="nofile" value="on" /><const S_NOFILE> ]</label></if>
+		<tr id="fileUploadField"><td class="postblock"><const S_UPLOADFILE> (max. <const MAX_FILES>)</td>
+		<td id="fileInput"><div><input type="file" name="file" onchange="file_input_change(<const MAX_FILES>)" /></div>
+		<if $textonly_inp>[<label><input type="checkbox" id="nofile" name="nofile" value="on" /><const S_NOFILE> ]</label></if>
 		</td></tr>
 	</if>
 
@@ -270,8 +271,9 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <label><input type="checkbox" name="no_format" value="1" /> <const S_NOTAGS2></label>
 </td></tr>
 <tr><td class="postblock"><const S_COMMENT></td><td><textarea name="field4" cols="60" rows="6"></textarea></td></tr>
-<tr><td class="postblock"><const S_UPLOADFILE></td><td><input type="file" name="file" size="35" />
-[<label><input type="checkbox" name="nofile" value="on" /><const S_NOFILE> ]</label>
+<tr id="fileUploadField"><td class="postblock"><const S_UPLOADFILE> (max. <const MAX_FILES>)</td>
+<td id="fileInput"><div><input type="file" name="file" onchange="file_input_change(<const MAX_FILES>)" /></div>
+<if $textonly_inp>[<label><input type="checkbox" id="nofile" name="nofile" value="on" /><const S_NOFILE> ]</label></if>
 </td></tr>
 <tr><td class="postblock"><const S_PARENT></td><td><input type="text" name="parent" size="8" /></td></tr>
 <tr><td class="postblock"><const S_DELPASS></td><td><input type="password" name="password" size="8" /> <const S_DELEXPL></td></tr>

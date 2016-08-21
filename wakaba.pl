@@ -1482,18 +1482,25 @@ sub sage_count($)
 	return ($sth->fetchrow_array())[0];
 }
 
-sub get_file_size($)
-{
-	my ($file)=@_;
-	my (@filestats,$size);
+sub get_file_size {
+    my ($file) = @_;
+	my (@filestats, $errfname, $errfsize, $max_size);
+    my ($size) = 0;
+    my ($ext) = $file =~ /\.([^\.]+)$/;
+    my %sizehash = FILESIZES;
 
-	@filestats=stat $file;
-	$size=$filestats[7];
+	@filestats = stat($file);
+	$size = $filestats[7];
+	$max_size = MAX_KB;
+	$max_size = $sizehash{$ext} if ($sizehash{$ext});
+	$errfname = clean_string(decode_string($file, CHARSET));
+	# or round using: int($size / 1024 + 0.5)
+	$errfsize = sprintf("%.2f", $size / 1024) . " kB &gt; " . $max_size . " kB";
 
-	make_error(S_TOOBIG) if($size>MAX_KB*1024);
-	make_error(S_TOOBIGORNONE) if($size==0); # check for small files, too?
+    make_error(S_TOOBIG . " ($errfname: $errfsize)") if ($size > $max_size * 1024);
+    make_error(S_TOOBIGORNONE . " ($errfname)") if ($size == 0);  # check for small files, too?
 
-	return($size);
+    return ($size);
 }
 
 sub process_file {
@@ -1507,7 +1514,7 @@ sub process_file {
     my ( $ext, $width, $height ) = analyze_image( $file, $uploadname );
 
     my $known = ( $width or $filetypes{$ext} );
-	my $errfname = sprintf "( %s )", clean_string(decode_string($uploadname, CHARSET));
+	my $errfname = sprintf " ( %s )", clean_string(decode_string($uploadname, CHARSET));
 
     make_error(S_BADFORMAT.$errfname) unless ( ALLOW_UNKNOWN or $known );
     make_error(S_BADFORMAT.$errfname) if ( grep { $_ eq $ext } FORBIDDEN_EXTENSIONS );

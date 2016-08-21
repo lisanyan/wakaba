@@ -1,8 +1,3 @@
-var doc = document;
-var postByNum = [];
-var ajaxPosts = {};
-var refArr = [];
-
 function get_cookie(name)
 {
 	with(document.cookie)
@@ -42,6 +37,136 @@ function get_password(name)
 
 	return(pass);
 }
+
+function file_input_change(max) {
+	var total = 0; // total number of file inputs
+	var empty = 0; // number of empty file inputs
+
+	// contains the file inputs and filename spans
+	var postfiles = document.getElementById("fileInput");
+	var inputs = postfiles.getElementsByTagName("input"); // actual file inputs
+
+	for (i = 0; i < inputs.length; i++) {
+		if (inputs[i].type != 'file') continue;
+
+		total++;
+
+		// no file selected
+		if (inputs[i].value.length == 0) {
+			empty++;
+		} else {
+			if (typeof inputs[i].files == "object" && inputs[i].files.length > 1)
+				total += inputs[i].files.length - 1;
+			inputs[i].style.display = "none";
+		}
+		update_file_label(inputs[i], max);
+	}
+
+	// less than "max" file inputs AND none of them empty: add new file input
+	if (total < max && empty == 0) {
+		var div = document.createElement("div");
+		var input = document.createElement("input");
+
+		input.type = "file";
+		input.name = "file";
+		input.onchange = function() {
+			file_input_change(max)
+		}
+
+		div.appendChild(input);
+		postfiles.appendChild(div);
+	}
+}
+
+function update_file_label(fileinput, max) {
+	// find a <span> next to the file input
+	var el = fileinput.nextSibling;
+	var found = false;
+	var span;
+
+	while (el && !found) {
+		if (el.nodeName == "SPAN") {
+			found = true;
+			span = el;
+		}
+		el = el.nextSibling;
+	}
+
+	// add a new <span> to the dom if none was found
+	if (!found) {
+		var spacer = document.createTextNode("\n ");
+		span = document.createElement("span");
+		fileinput.parentNode.appendChild(spacer);
+		fileinput.parentNode.appendChild(span);
+	}
+
+	// put file name(s) into span
+	var filename = fileinput.value;
+
+	if (filename.length == 0) {
+		span.innerHTML = '';
+		return;
+	}
+
+	var display_file = format_filename(filename);
+
+	if (typeof fileinput.files == "object" && fileinput.files.length > 1) {
+		for (var i = 1, l = fileinput.files.length; i < l; i++) {
+			display_file += ' <br />\n&nbsp; '
+				+ format_filename(fileinput.files[i].name);
+		}
+	}
+
+	span.innerHTML = ' <a class="hide" href="javascript:void(0)"'
+		+ ' onclick="del_file_input(this,' + max + ')">'
+		+ '<img src="/img/cancel.png" width="16" height="16" title="'
+		+ msg_remove_file + '" /></a> '
+		+ display_file + '\n';
+}
+
+function format_filename(filename) {
+	var filebase = "";  // file name with dot but without extension
+	var extension = ""; // file extension without dot
+
+	// remove path (if any)
+	var lastIndex = filename.lastIndexOf("\\");
+	if (lastIndex >= 0) {
+		filename = filename.substring(lastIndex + 1);
+	}
+
+	// get file base name and file extension
+	filebase = filename;
+	extension = "";
+	lastIndex = filename.lastIndexOf(".");
+	if (lastIndex >= 0) {
+		filebase = filename.substring(0, lastIndex + 1);
+		extension = filename.substring(lastIndex + 1);
+	}
+
+	var result = filebase;
+	if (filetype_allowed(extension)) {
+		result += extension;
+	} else {
+		result += '<span class="adminname"><strong>' + extension + '</strong></span>';
+	}
+
+	return result;
+}
+
+function filetype_allowed(ext) {
+	var extensions = filetypes.split(", ");
+	for (var i = 0, l = extensions.length; i < l; i++) {
+		if (extensions[i] == ext.toUpperCase()) return true;
+	}
+	return false;
+}
+
+function del_file_input(sender, max) {
+	// <a>   <span>     <div>      <td>                  <a>    <span>    <div>
+	sender.parentNode.parentNode.parentNode.removeChild(sender.parentNode.parentNode);
+	file_input_change(max);
+}
+
 
 function insert(text)
 {
@@ -169,7 +294,7 @@ function set_inputs(id) {
 
 		// preload images for post form
 		if (document.images) {
-			new Image().src = "/img/icons/cancel.png";
+			new Image().src = "/img/cancel.png";
 		}
 	}
 }
@@ -226,126 +351,6 @@ function expand_image(element, org_width, org_height, thumb_width, thumb_height,
 	return false;
 }
 
-// =======================================================================
-// ЛЮТЫЙ НЕГР ЗАСТРЯЛ В УКУПНИКЕ АААААААААААААААААААААААААААААААААА
-function $X(path, root) {
-    return doc.evaluate(path, root || doc, null, 6, null);
-}
-function $x(path, root) {
-    return doc.evaluate(path, root || doc, null, 8, null).singleNodeValue;
-}
-function $del(el) {
-    if(el) el.parentNode.removeChild(el);
-}
-function $each(arr, fn) {
-	for(var el, i = 0; el = arr[i++];)
-		fn(el);
-}
-function $each_x(list, fn) {
-    if(!list) return;
-    var i = list.snapshotLength;
-    if(i > 0) while(i--) fn(list.snapshotItem(i), i);
-}
-
-function delPostPreview(e) {
-    var el = $x('ancestor-or-self::*[starts-with(@id,"pstprev")]', e.relatedTarget);
-    if(!el) $each_x($X('.//div[starts-with(@id,"pstprev")]'), function(clone) { $del(clone); });
-    else while(el.nextSibling) $del(el.nextSibling);
-}
-
-function showPostPreview(e) {
-    var tNum = this.pathname.substring(this.pathname.lastIndexOf('/')).match(/\d+/);
-    var pNum = this.hash.match(/\d+/) || tNum;
-    var brd = decodeURIComponent(this.pathname.match(/[^\/]+/));
-    var x = e.clientX + (doc.documentElement.scrollLeft || doc.body.scrollLeft) - doc.documentElement.clientLeft + 1;
-    var y = e.clientY + (doc.documentElement.scrollTop || doc.body.scrollTop) - doc.documentElement.clientTop;
-    var cln = doc.createElement('div');
-    cln.id = 'pstprev_' + pNum;
-    cln.className = 'reply';
-    cln.style.cssText = 'position:absolute; z-index:950; border:solid 1px #575763; top:' + y + 'px;' +
-        (x < doc.body.clientWidth/2 ? 'left:' + x + 'px' : 'right:' + parseInt(doc.body.clientWidth - x + 1) + 'px');
-    cln.addEventListener('mouseout', delPostPreview, false);
-    var aj = ajaxPosts[tNum];
-    var functor = function(cln, html) {
-        cln.innerHTML = html;
-        doRefPreview(cln);
-        if(!$x('.//small', cln) && ajaxPosts[tNum] && ajaxPosts[tNum][pNum] && refArr[pNum])
-            showRefMap(cln, pNum, tNum, brd);
-    };
-    cln.innerHTML = 'Загрузка...';
-    if(postByNum[pNum]) functor(cln, postByNum[pNum].innerHTML);
-    else {
-		var postURI = '/wakaba.pl?board=' + brd + '&task=showpost&post=' + pNum;
-		if(aj && aj[pNum]) functor(cln, aj[pNum]);
-        else AJAX(brd, postURI, function(err) { functor(cln, err || ajaxPosts[tNum][pNum] || 'Пост не найден'); });
-    };
-    $del(doc.getElementById(cln.id));
-    $x('.//form[@id="delform"]').appendChild(cln);
-}
-
-function doRefPreview(node) {
-    $each_x($X('.//a[starts-with(text(),">>")]', node || doc), function(link) {
-        link.addEventListener('mouseover', showPostPreview, false);
-        link.addEventListener('mouseout', delPostPreview, false);
-    });
-}
-
-function getRefMap(post, pNum, rNum) {
-    if(!refArr[rNum]) refArr[rNum] = pNum;
-    else if(refArr[rNum].indexOf(pNum) == -1) refArr[rNum] = pNum + ', ' + refArr[rNum];
-}
-
-function showRefMap(post, pNum, tNum, brd) {
-    var ref = refArr[pNum].toString().replace(/(\d+)/g,
-    '<a href="' + (tNum ? '/' + brd + '/res/' + tNum + '.html#$1' : '#$1') + '" onclick="highlight($1)">&gt;&gt;$1</a>');
-    var map = doc.createElement('small');
-    map.id = 'rfmap_' + pNum;
-    map.innerHTML = '<br><i class="abbrev">&nbsp;Ответы: ' + ref + '</i><br>';
-    doRefPreview(map);
-    if(post) post.appendChild(map);
-    else {
-        var el = $x('.//a[@name="' + pNum + '"]');
-        while(el.tagName != 'BLOCKQUOTE') el = el.nextSibling;
-        el.parentNode.insertBefore(map, el.nextSibling);
-    }
-}
-
-function doRefMap(node) {
-    $each_x($X('.//a[starts-with(text(),">>")]', node || doc), function(link) {
-        if(!/\//.test(link.textContent)) {
-            var rNum = link.hash.match(/\d+/);
-            var post = $x('./ancestor::td', link);
-            if((postByNum[rNum] || $x('.//a[@id="' + rNum + '"]')) && post)
-                getRefMap(post, post.id.match(/\d+/), rNum);
-        }
-    });
-    for(var rNum in refArr)
-        showRefMap(postByNum[rNum], rNum);
-}
-
-function AJAX(b, url, fn) {
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-        if(xhr.readyState != 4) return;
-        if(xhr.status == 200) {
-            var x = xhr.responseText;
-			parser = new DOMParser();
-			var docu = parser.parseFromString(x, "text/html")
-			var tNum = docu.querySelector('.thr').id;
-			ajaxPosts[tNum] = {keys: []};
-			$each_x($X('.//td[@class="reply"]', docu), function(post) {
-				var pNum = post.id.match(/\d+/);
-				postByNum[pNum] = post;
-				ajaxPosts[tNum].keys.push(pNum);
-				ajaxPosts[tNum][pNum] = post.innerHTML;
-			});
-			fn();
-        } else fn('HTTP ' + xhr.status + ' ' + xhr.statusText);
-    };
-    xhr.open('GET', url, true);
-    xhr.send(false);
-}
-
 window.onunload=function(e)
 {
 	if(style_cookie)
@@ -374,10 +379,6 @@ window.onload=function(e)
 			insert('>>' + a.href.match(/#i(\d+)$/)[1] + '\n' + (sel ? '>' + sel.replace(/\n/g, '\n>') + '\n' : ''));
 		}
 	});
-
-	$each_x($X('.//td[@class="reply"]'), function(post) { postByNum[post.id.match(/\d+/)] = post; });
-    doRefPreview();
-    doRefMap();
 }
 
 if(style_cookie)
