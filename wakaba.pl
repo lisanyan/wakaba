@@ -304,6 +304,12 @@ return 1 if(caller); # stop here if we're being called externally
 
         find_posts($find,$op_only,$in_subject,$in_filenames,$in_comment);
     }
+	elsif($task eq "stats")
+	{
+		my $page=$query->param("page");
+		$page=0 if(!$page);
+		make_stats($page);
+	}
 	elsif($task eq "rebuild")
 	{
 		my $admin=$query->cookie("wakaadmin");
@@ -703,6 +709,49 @@ sub find_posts {
 	$output =~ s/^\s+//; # remove whitespace at the beginning
 	$output =~ s/^\s+\n//mg; # remove empty lines
     print($output);
+}
+
+sub make_stats($)
+{
+	my ($page) = @_;
+	my ($sth,$row,@data);
+	my $date_format = '%d.%m.%Y (%a)';
+
+	$sth = $dbh->prepare(
+		"SELECT DATE_FORMAT(FROM_UNIXTIME(`timestamp`), ?) AS `datum`, COUNT(`num`) AS `posts` FROM "
+		. SQL_TABLE . " GROUP BY `datum` ORDER BY timestamp DESC;") or make_sql_error();
+
+	$sth->execute(clean_string(decode_string($date_format, CHARSET))) or make_sql_error();
+
+	my $minrows=$page*MAX_STATS;
+	my $maxrows=$minrows+MAX_STATS;
+	my $rowcount=0;
+
+	while($row = $sth->fetchrow_hashref())
+	{
+		$rowcount++;
+		if($rowcount>$minrows and $rowcount<=$maxrows)
+		{
+			$$row{rowtype}=@data%2+1;
+			push(@data, $row);
+		}
+	}
+
+	# Are we on a non-existent page?
+	if($page!=0 and $page>($rowcount-1)/MAX_STATS)
+	{
+		make_http_forward(get_script_name()."?task=stats&page=0&board=".get_board_id());
+		return;
+	}
+
+	my @pages=map +{ page=>$_,current=>$_==$page,url=>escamp(get_script_name()."?task=stats&page=$_&board=".get_board_id()) },0..($rowcount-1)/MAX_STATS;
+
+	my ($prevpage,$nextpage);
+	$prevpage=$page-1 if($page!=0);
+	$nextpage=$page+1 if($page<$#pages);
+
+	make_http_header();
+	print encode_string(STATS_TEMPLATE->(data=>\@data,pages=>\@pages,next=>$nextpage,prev=>$prevpage));
 }
 
 sub get_files($$$) {

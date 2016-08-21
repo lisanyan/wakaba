@@ -54,6 +54,10 @@ use constant S_SEARCHFOUND => 'Found:';
 use constant S_OPTIONS => 'Options';
 use constant S_MINLENGTH => '(min. 3 symbols)';
 
+use constant S_STATS => 'Stats';
+use constant S_STATSTITLE => 'Post Statistics';
+use constant S_DATE => 'Date';
+
 use constant S_WEEKDAYS => ('Sun','Mon','Tue','Wed','Thu','Fri','Sat');	# Defines abbreviated weekday names.
 
 use constant S_REPORTHEAD => 'Post reporting';

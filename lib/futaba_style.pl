@@ -146,7 +146,10 @@ use constant PAGE_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 	<if $nextpage><form method="get" action="<var $nextpage>"><input value="<const S_NEXT>" type="submit" /></form></if>
 	<if !$nextpage><const S_LASTPG></if>
 
-	</td></tr></tbody></table><br style="clear:both;" />
+	</td></tr>
+	<tr><td>[<a href="<var get_secure_script_name()>?task=stats&amp;board=<var get_board_id()>"><const S_STATS></a>]</td><td></td>
+	<td></td>
+	</tr></tbody></table><br style="clear:both;" />
 </if>
 
 <if $thread><br style="clear:both;"></if>
@@ -196,16 +199,64 @@ use constant SEARCH_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 }.NORMAL_FOOT_INCLUDE);
 
 use constant SINGLE_POST_TEMPLATE => compile_template(q{
-<a class="thr" id="<var $thread>"></a>
 <loop $posts>
 } . POST_VIEW_INCLUDE . q{
 </loop>
 });
 
+
+use constant STATS_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
+<div style="text-align: center" class="stats">
+<h1><const S_STATSTITLE></h1>
+<table style="margin: 0 auto"><tr class="managehead"><th><const S_DATE></th><th>&nbsp;</th></tr>
+<loop $data>
+<tr class="row<var $rowtype>">
+<td><var $datum></td><td><var $posts></td>
+</loop>
+</table>
+<table border="1" style="margin:0 auto"><tbody><tr>
+	<td>
+		<if defined $prev>
+			<form method="get" action="<var $self>">
+				<input type="hidden" name="task" value="stats" />
+				<input type="hidden" name="board" value="<const BOARD_IDENT>" />
+				<input type="hidden" name="page" value="<var $prev>" />
+				<input type="submit" value="<const S_PREV>" />
+			</form>
+		<else>
+			<const S_FIRSTPG>
+		</if>
+	</td>
+	<td>
+		<loop $pages>
+			<if !$current>
+				[<a href="<var $url>"><var $page></a>]
+			<else>
+				[<var $page>]
+			</if>
+		</loop>
+	</td>
+	<td>
+		<if defined $next>
+			<form method="get" action="<var $self>">
+				<input type="hidden" name="task" value="stats" />
+				<input type="hidden" name="board" value="<const BOARD_IDENT>" />
+				<input type="hidden" name="page" value="<var $next>" />
+				<input type="submit" value="<const S_NEXT>" />
+			</form>
+		<else>
+			<const S_LASTPG>
+		</if>
+	</td>
+</tr></tbody></table>
+</div>
+}.NORMAL_FOOT_INCLUDE);
+
+
 use constant POST_REPORT_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 [<a href="<var expand_filename(HTML_SELF)>"><const S_RETURN></a>]
 <div class="theader"><const S_REPORTHEAD></div>
-<div align="center">
+<div style="text-align:center">
 	<h3><const S_REPORTEXPL></h3>
 	<h3><loop $posts>
 	&nbsp;<a href="<var get_reply_link($num,$parent)>"><var $num></a>&nbsp;
@@ -224,7 +275,7 @@ use constant POST_REPORT_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 
 
 use constant POST_REPORT_SUCCESSFUL => compile_template(NORMAL_HEAD_INCLUDE.q{
-<div align="center">
+<div style="text-align:center">
 <h1><const S_REPORTSUCCESS></h1>
 <br />
 <h1><a href="<var expand_filename(HTML_SELF)>"><const S_RETURN></a></h1>
@@ -275,7 +326,7 @@ use constant MANAGER_HEAD_INCLUDE => NORMAL_HEAD_INCLUDE.q{
 };
 
 use constant ADMIN_LOGIN_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
-<div align="center"><form action="<var $self>" method="post">
+<div style="text-align:center"><form action="<var $self>" method="post">
 <input type="hidden" name="board" value="<const BOARD_IDENT>">
 <input type="hidden" name="task" value="admin" />
 <div>
@@ -340,7 +391,7 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 [<label><input type="checkbox" name="fileonly" value="on" /><const S_MPONLYPIC></label>]
 </div>
 
-<table align="center" style="white-space: nowrap"><tbody>
+<table style="margin:0 auto;white-space: nowrap"><tbody>
 <tr class="managehead"><const S_MPTABLE></tr>
 
 <loop $posts>
@@ -354,7 +405,8 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 
 	<td><var make_date($timestamp,"tiny")></td>
 	<td><var clean_string(substr $subject,0,20)></td>
-	<td><b><var clean_string(substr $name,0,30)><var $trip></b></td>
+	<if $adminpost><td><span class="adminname"><b><var clean_string(substr $name,0,30)><var $trip></b></span></td>
+	<else><td><b><var clean_string(substr $name,0,30)><var $trip></b></td></if>
 	<td><var clean_string(substr $comment,0,50)></td>
 	<td><var dec_to_dot($ip)>
 		[<a href="<var $self>?task=deleteall&amp;board=<var get_board_id()>&amp;ip=<var $ip>"><const S_MPDELETEALL></a>]
@@ -392,7 +444,7 @@ use constant POST_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 
 </form>
 
-<table border="1" align="center"><tbody><tr>
+<table border="1" style="margin:0 auto"><tbody><tr>
 	<td>
 		<if defined $prev>
 			<form method="get" action="<var $self>">
@@ -569,7 +621,7 @@ use constant BAN_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 </td></tr></tbody></table>
 </div><br />
 
-<table align="center"><tbody>
+<table style="margin:0 auto"><tbody>
 <tr class="managehead"><const S_BANTABLE></tr>
 
 <loop $bans>
@@ -619,7 +671,7 @@ use constant REPORTS_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <div class="delbuttons">
 <input type="submit" value="<const S_REPORTSDISMISS>" />
 </div>
-<table align="center"><tbody>
+<table style="margin:0 auto"><tbody>
 <tr class="managehead">
 <th><const S_REPORTSNUM></th>
 <th><const S_REPORTSBOARD></th>

@@ -25,6 +25,7 @@ use constant TITLE => 'Wakaba image board';	# Name of this image board
 #use constant IMAGE_REPLIES_PER_THREAD => 0;	# Number of image replies per thread to show, set to 0 for no limit.
 #use constant REPLIES_PER_LOCKED_THREAD => 1; 	# Replies per locked thread to show
 #use constant IMAGE_REPLIES_PER_LOCKED_THREAD => 0;	# Number of image replies per locked thread to show, set to 0 for no limit.
+#use constant MAX_STATS => 25; 					# Number of rows per stats page
 #use constant S_ANONAME => 'Anonymous';			# Defines what to print if there is no text entered in the name field
 #use constant S_ANOTEXT => '';					# Defines what to print if there is no text entered in the comment field
 #use constant S_ANOTITLE => '';					# Defines what to print if there is no text entered into subject field

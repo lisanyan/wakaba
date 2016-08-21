@@ -1,3 +1,9 @@
+// Wakaba
+function $each(arr, fn) {
+	for(var el, i = 0; el = arr[i++];)
+		fn(el);
+}
+
 function get_cookie(name)
 {
 	with(document.cookie)
