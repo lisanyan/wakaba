@@ -19,7 +19,6 @@ use constant S_DELEXPL => '(for post and file deletion)';			# Prints explanation
 use constant S_SPAMTRAP => 'Leave these fields empty (spam trap): ';
 use constant S_SAGE => 'Sage';
 use constant S_SAGEDESC => 'Don\'t bump thread';
-use constant S_OPTIONS => 'Options';
 
 use constant S_THUMB => ''; #'Thumbnail displayed, click image for full size.';	# Prints instructions for viewing real source
 use constant S_HIDDEN => 'Thumbnail hidden, click filename for the full image.';	# Prints instructions for viewing hidden image reply
@@ -43,6 +42,17 @@ use constant S_PREV => 'Previous';									# Defines previous button
 use constant S_FIRSTPG => 'Previous';								# Defines previous button
 use constant S_NEXT => 'Next';										# Defines next button
 use constant S_LASTPG => 'Next';									# Defines next button
+
+use constant S_SEARCHTITLE => 'Post Search';
+use constant S_SEARCH => 'Search';
+use constant S_SEARCHCOMMENT => 'In comment';
+use constant S_SEARCHSUBJECT => 'In subject';
+use constant S_SEARCHFILES => 'In files';
+use constant S_SEARCHOP => 'Search in OP only';
+use constant S_SEARCHSUBMIT => 'Submit';
+use constant S_SEARCHFOUND => 'Found:';
+use constant S_OPTIONS => 'Options';
+use constant S_MINLENGTH => '(min. 3 symbols)';
 
 use constant S_WEEKDAYS => ('Sun','Mon','Tue','Wed','Thu','Fri','Sat');	# Defines abbreviated weekday names.
 

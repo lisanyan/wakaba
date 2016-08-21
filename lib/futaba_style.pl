@@ -37,6 +37,7 @@ var msg_remove_file = '<const S_JS_REMOVEFILE>';
 </loop>
 -
 [<a href="<var expand_filename(HOME)>" target="_top"><const S_HOME></a>]
+[<a href="<var get_secure_script_name()>?task=search&amp;board=<var get_board_id()>"><const S_SEARCH></a>]
 [<a href="<var get_secure_script_name()>?task=admin&amp;board=<var get_board_id()>"><const S_ADMIN></a>]
 </div>
 
@@ -148,6 +149,49 @@ use constant PAGE_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 </if>
 
 <if $thread><br style="clear:both;"></if>
+}.NORMAL_FOOT_INCLUDE);
+
+use constant SEARCH_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
+<div class="postarea">
+<form id="searchform" action="<var $self>" method="post" enctype="multipart/form-data">
+<input type="hidden" name="board" value="<const BOARD_IDENT>" />
+<input type="hidden" name="task" value="search" />
+
+<table>
+<tbody>
+
+<tr><td class="postblock"><label for="search"><const S_SEARCH><br />
+<const S_MINLENGTH></label></td>
+<td><input type="text" name="find" id="search" value="<var $find>" />
+<input value="<const S_SEARCHSUBMIT>" type="submit" />
+</td></tr>
+<tr><td class="postblock"><const S_OPTIONS></td>
+<td>
+<label><input type="checkbox" name="op" value="1" <if $oponly>checked="checked"</if> /> <const S_SEARCHOP></label><br />
+<label><input type="checkbox" name="subject" value="1" <if $insubject>checked="checked"</if> /> <const S_SEARCHSUBJECT></label><br />
+<!--<label><input type="checkbox" name="files" value="1" <if $filenames>checked="checked"</if> /> <const S_SEARCHFILES></label><br />-->
+<label><input type="checkbox" name="comment" value="1" <if $comment>checked="checked"</if> /> <const S_SEARCHCOMMENT></label>
+</td></tr>
+
+</tbody>
+</table>
+
+</form>
+</div>
+
+<if $find>
+	<hr />
+	<const S_SEARCHFOUND> <var $count>
+	<if $count><br /><br /></if>
+</if>
+
+<loop $posts>
+	<if !$parent><hr /></if>
+}.POST_VIEW_INCLUDE.q{
+	<p style="clear: both;"></p>
+</loop>
+
+<hr />
 }.NORMAL_FOOT_INCLUDE);
 
 use constant SINGLE_POST_TEMPLATE => compile_template(q{

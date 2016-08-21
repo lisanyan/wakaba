@@ -134,6 +134,14 @@ return 1 if(caller); # stop here if we're being called externally
 		my $captcha_only = $query->param("captcha");
 		get_boardconfig($captcha_only, 1);
 	}
+    elsif ( $json eq "search" ) {
+        my $find            = $query->param("find");
+        my $op_only         = $query->param("op");
+        my $in_subject      = $query->param("subject");
+        my $in_comment      = $query->param("comment");
+
+        json_find_posts($find, $op_only, $in_subject, $in_comment);
+    }
 	elsif ( $json ) {
 		make_json_error();
 	}
@@ -285,6 +293,15 @@ return 1 if(caller); # stop here if we're being called externally
 		my @files = $query->param("file"); #needs newer perl/cgi for multi_param
 		move_files($admin, @files);
 	}
+    elsif ( $task eq "search" ) {
+        my $find=$query->param("find");
+        my $op_only=$query->param("op");
+        my $in_subject=$query->param("subject");
+        my $in_filenames=$query->param("files");
+        my $in_comment=$query->param("comment");
+
+        find_posts($find,$op_only,$in_subject,$in_filenames,$in_comment);
+    }
 	elsif($task eq "rebuild")
 	{
 		my $admin=$query->cookie("wakaadmin");
@@ -616,6 +633,72 @@ sub build_thread_cache_all()
 	}
 }
 
+sub find_posts {
+    my ($find, $op_only, $in_subject, $in_filenames, $in_comment) = @_;
+
+    $find = clean_string(decode_string($find, CHARSET));
+    $find =~ s/^\s+|\s+$//g; # trim
+    $in_comment = 1 unless $find; # make the box checked for the first call.
+
+    my ($sth, $row);
+    my ($search, $subject);
+    my $lfind = lc($find); # ignore case
+    my $cstring = "\%$lfind\%";
+    my $count = 0;
+    my $threads = 0;
+    my @results;
+
+    if (length($lfind) >= 3) {
+        # grab all posts, in thread order (ugh, ugly kludge)
+        $sth = $dbh->prepare(
+            "SELECT * FROM " . SQL_TABLE . " WHERE comment LIKE ? OR subject LIKE ? ORDER BY lasthit DESC,CASE parent WHEN 0 THEN num ELSE parent END ASC,num ASC"
+        ) or make_sql_error();
+        $sth->execute($cstring, $cstring) or make_sql_error();
+
+        while ((my $row = get_decoded_hashref($sth)) and ($count < MAX_SEARCH_RESULTS))
+        {
+            $threads++ if !$$row{parent};
+            $search = $$row{comment};
+            $search =~ s/<.+?>//mg; # must not search inside html-tags. remove them.
+            $search = lc($search);
+            $subject = lc($$row{subject});
+
+            if (($in_comment and (index($search, $lfind) > -1)) or ($in_subject and (index($subject, $lfind) > -1))) {
+
+                # highlight found words - this can break HTML tags
+                # TODO: select or define CSS style
+                # $$row{comment} =~ s/($find)/<span style="background-color: #706B5E; color: #FFFFFF; font-weight: bold;">$1<\/span>/ig;
+
+                add_images_to_row($row);
+                if (!$$row{parent}) { # OP post
+                    push @results, $row;
+                } else { # reply post
+                    push @results, $row unless ($op_only);
+                }
+                $count = @results;
+            }
+        }
+        $sth->finish(); # Clean up the record set
+    }
+
+    make_http_header();
+    my $output = encode_string(SEARCH_TEMPLATE->(
+            title       => S_SEARCHTITLE,
+            posts       => \@results,
+            find        => $find,
+            oponly      => $op_only,
+            insubject   => $in_subject,
+            filenames   => $in_filenames,
+            comment     => $in_comment,
+            count       => $count,
+            admin       => 0,
+            search      => 1,
+        ));
+
+    $output =~ s/^\s+\n//mg;
+    print($output);
+}
+
 sub get_files($$$) {
 	my ($threadid, $postid, $files) = @_;
 	my ($sth, $res, $where, $uploadname);
@@ -824,6 +907,90 @@ sub output_json_postcount {
 
     %json = (
         data => $row,
+        status => \%status
+    );
+
+    make_json_header();
+    print $JSON->encode(\%json);
+}
+
+sub json_find_posts {
+    my ($find, $op_only, $in_subject, $in_comment) = @_;
+    my ($sth,$row,@threads);
+    my ($code,$error);
+
+    $ajax_errors = 1;
+
+    $find = clean_string(decode_string($find, CHARSET));
+    $find =~ s/^\s+|\s+$//g; # trim
+    $in_comment = 1 unless $find; # make the box checked for the first call.
+
+    my ($sth,$row);
+    my ($search,$subject);
+    my $lfind = lc($find); # ignore case
+    my $cstring = "\%$lfind\%";
+    my $count = 0;
+    my $threads = 0;
+    my @results;
+
+    if (length($lfind) >= 3) {
+        # grab all posts, in thread order (ugh, ugly kludge)
+        $sth = $dbh->prepare(
+            "SELECT * FROM " . SQL_TABLE . " WHERE comment LIKE ? OR subject LIKE ? ORDER BY lasthit DESC,CASE parent WHEN 0 THEN num ELSE parent END ASC,num ASC"
+        ) or make_sql_error();
+        $sth->execute($cstring, $cstring) or make_sql_error();
+
+        while ((my $row = get_decoded_hashref($sth)) and ($count < MAX_SEARCH_RESULTS))
+        {
+            $threads++ if !$$row{parent};
+            $search = $$row{comment};
+            $search =~ s/<.+?>//mg; # must not search inside html-tags. remove them.
+            $search = lc($search);
+            $subject = lc($$row{subject});
+
+            if (($in_comment and (index($search, $lfind) > -1)) or ($in_subject and (index($subject, $lfind) > -1))) {
+
+                # highlight found words - this can break HTML tags
+                # TODO: select or define CSS style
+                #$$row{comment} =~ s/($find)/<span style="background-color: #706B5E; color: #FFFFFF; font-weight: bold;">$1<\/span>/ig;
+
+                hide_row_els($row);
+                add_images_to_row($row);
+                if (!$$row{parent}) { # OP post
+                    # $$row{sticky_isnull} = 1; # hack, until this field is removed.
+                    push @results, $row;
+                } else { # reply post
+                    push @results, $row unless ($op_only);
+                }
+                $count = @results;
+            }
+        }
+        if(@results ne 0) {
+            $code = 200;
+        }
+        elsif(@results < 1) {
+            $code = 404;
+            $error = 'Element not found.';
+        }
+        else {
+            $code = 500;
+        }
+        $sth->finish(); # Clean up the record set
+    }
+    else {
+        $code = 404;
+        $error = 'Request is too short';
+    }
+
+    my %status = (
+        error_code => $code,
+        error_msg => $error,
+    );
+
+    my %json = (
+        boardinfo => get_boardconfig(),
+        data => \@results,
+        found => $count,
         status => \%status
     );
 
