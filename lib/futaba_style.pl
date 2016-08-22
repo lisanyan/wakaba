@@ -165,9 +165,7 @@ use constant PAGE_TEMPLATE => compile_template(NORMAL_HEAD_INCLUDE.q{
 	<if !$nextpage><const S_LASTPG></if>
 
 	</td></tr>
-	<tr><td>[<a href="<var get_secure_script_name()>?task=stats&amp;board=<var get_board_id()>"><const S_STATS></a>]</td><td></td>
-	<td></td>
-	</tr></tbody></table><br style="clear:both;" />
+	</tbody></table><br style="clear:both;" />
 </if>
 
 <if $thread><br style="clear:both;"></if>

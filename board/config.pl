@@ -14,9 +14,9 @@ use constant SQL_TABLE_IMG => 'board_img';			# Table (NOT DATABASE) used by imag
 use constant BOARD_IDENT => 'board';
 
 # Page look
-use constant BOARD_NAME => 'Board'; # Name of this image board (without directory)
-# use constant BOARD_DESC => ''; # Board description
-use constant TITLE => 'Wakaba image board'; # Name of chan
+use constant BOARD_NAME => 'Wakaba image board';  			# Name of this image board (without directory)
+#use constant BOARD_DESC => ''; 				# Board description
+use constant TITLE => 'Board'; 					# Name of chan
 #use constant BANNER => 0; 						# Banner (1: yes, 0: no)
 #use constant FAVICON => 'wakaba.ico';			# Favicon.ico file
 #use constant HOME => '../';					# Site home directory (up one level by default
@@ -65,13 +65,6 @@ use constant TITLE => 'Wakaba image board'; # Name of chan
 #use constant REPORTS_MAX => 5;
 #use constant REPORTS_REASONLENGTH => 120;
 
-# Load Balancing
-#use constant ENABLE_LOAD => 0;					# Enable the distribution of image files across multiple hosts (0: no, 1: yes). May not work on a windows host. Do not enable if using STUPID_THUMBNAILING.
-#use constant LOAD_SENDER_SCRIPT => './sender.pl';
-#use constant LOAD_LOCAL => 120;				# Gigabytes of available bandwidth relative to other hosts (please read documentation)
-#use constant LOAD_HOSTS => (['http://somesite/loader.pl', 'password', 100]);
-#use constant LOAD_KBRATE => 25;				# minimum send rate that will be accepted without timing out
-
 # Tweaks
 #use constant THUMBNAIL_SMALL => 1;				# Thumbnail small images (1: yes, 0: no)
 #use constant THUMBNAIL_QUALITY => 70;			# Thumbnail JPEG quality
@@ -87,6 +80,8 @@ use constant TITLE => 'Wakaba image board'; # Name of chan
 #use constant RENZOKU => 5;						# Seconds between posts (floodcheck)
 #use constant RENZOKU2 => 10;					# Seconds between image posts (floodcheck)
 #use constant RENZOKU3 => 900;					# Seconds between identical posts (floodcheck)
+#use constant RENZOKU4 => 60;					# Seconds to wait before removing post
+#use constant RENZOKU5 => 900;					# Seconds between identical threads (floodcheck)
 #use constant NOSAGE_WINDOW => 1200;			# Seconds that you can post to your own thread without increasing the sage count
 #use constant USE_SECURE_ADMIN => 0;			# Use HTTPS for the admin panel.
 #use constant CHARSET => 'utf-8';				# Character set to use, typically 'utf-8' or 'shift_jis'. Disable charset handling by setting to ''. Remember to set Apache to use the same character set for .html files! (AddCharset shift_jis html)

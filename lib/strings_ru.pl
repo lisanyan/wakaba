@@ -162,7 +162,8 @@ use constant S_BADHOSTPROXY => 'Прокси забанено.'; # Returns error
 use constant S_RENZOKU => 'Обнаружен флуд, пост отвергнут.'; # Returns error for $sec/post spam filter
 use constant S_RENZOKU2 => 'Обнаружен флуд, файл отвергнут.'; # Returns error for $sec/upload spam filter
 use constant S_RENZOKU3 => 'Обнаружен флуд.'; # Returns error for $sec/similar posts spam filter.
-use constant S_RENZOKU4 => 'Период ожидания перед удалением еще не истке.'; # Returns error for $sec/similar posts spam filter.
+use constant S_RENZOKU4 => 'Период ожидания перед удалением еще не истек.'; # Returns error for deleting
+use constant S_RENZOKU5 => 'Обнаружен флуд. Подождите (%d) минут.';
 use constant S_PROXY => 'Обнаружен открытый прокси.'; # Returns error for proxy detection.
 use constant S_DUPE => 'Файл уже залит <a href="%s">здесь</a>.'; # Returns error when an md5 checksum already exists.
 use constant S_DUPENAME => 'Файл с тем же именем уже есть.'; # Returns error when an filename already exists.

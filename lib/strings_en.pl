@@ -162,6 +162,8 @@ use constant S_BADHOSTPROXY => 'Proxy is banned for being open.'; # Returns erro
 use constant S_RENZOKU => 'Flood detected, post discarded.'; # Returns error for $sec/post spam filter
 use constant S_RENZOKU2 => 'Flood detected, file discarded.'; # Returns error for $sec/upload spam filter
 use constant S_RENZOKU3 => 'Flood detected.'; # Returns error for $sec/similar posts spam filter.
+use constant S_RENZOKU4 => 'Post removal period hasn\'t expired yet.';
+use constant S_RENZOKU5 => 'Flood detected. Please wait (%d) minutes.';
 use constant S_DUPE => 'This file has already been posted <a href="%s">here</a>.'; # Returns error when an md5 checksum already exists.
 use constant S_DUPENAME => 'A file with the same name already exists.'; # Returns error when an filename already exists.
 use constant S_NOPOSTS => 'You didn\'t select any posts!';

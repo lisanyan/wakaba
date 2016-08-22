@@ -1,9 +1,16 @@
+/*mobile css*/
+@media only screen and (max-width: 480px) {
+.desktop{display:none}
+.mobile{display:inline!important}
+.postarea td{width:95%;float:left}
+.postarea textarea{width:100%}
+table .reply{margin-left:0!important;float:none!important}
+}
 /*main*/
 html,body,ul,ol,p,pre,table,td,img{text-rendering:optimizeLegibility;font-variant-ligatures:common-ligatures;font-kerning:normal}
 body{margin:0;padding:8px;margin-bottom:auto}
 blockquote blockquote{margin-left:0}
 form{margin-bottom:0}
-form .trap{display:none}
 .postarea{text-align:center}
 .postarea table{margin:0 auto;text-align:left}
 .reply blockquote,blockquote :last-child{margin-bottom:0}
@@ -11,26 +18,26 @@ form .trap{display:none}
 .replypage .replylink{display:none}
 .reflink a,.filename a,.filetype a,.togglethread a{color:inherit;text-decoration:none}
 .reflink a:hover,.filename a:hover,.filetype a:hover{text-decoration:none}
+.filelink a img{display:block;margin:0 auto}
+.filelink a:active{top:0}
 .locked{font-weight:700;font-size:1.2em}
-.hidden{display:none}
-/*header*/
+.trap, .hidden, .mobile{display: none}
+
 .header{text-align:center;font:normal 1em serif}
 .slogan{font-size:1.2em;font-style:italic}
 .banner{padding-top:1em;clear:both}
 .banner img{width:300px;height:100px}
-/*post*/
+
 .postername .postertrip{font-weight:400}
 .doubledash a{text-decoration:none;color:inherit}
 .blockquote p{text-align:justify;margin:0 0 15px}
 .spoiler{background-color:#000;color:#000;text-shadow:none}
 .spoiler a{color:#000}
 .spoiler:hover,.spoiler a:hover{color:#fff}
-/*file container*/
+
 .file_container{float:left;margin-left:20px}
 .file{text-align:center;margin:0 1.2em 1.2em 0;float:left;display:block;vertical-align:top}
 .filesize{font-size:.85em}
-.filelink a img{display:block;margin:0 auto}
-.filelink a:active{top:0}
 .filetype,.filedeleted{font:bold 2em sans-serif;width:200px;padding:.5em 0}
 .filebg{background-image:url(/img/erna-klein.png);background-position:bottom left;background-repeat:no-repeat}
 .filedeleted{color:inherit}

@@ -1262,7 +1262,7 @@ sub post_stuff
 	$comment=S_ANOTEXT unless $comment;
 
 	# flood protection - must happen after inputs have been cleaned up
-	flood_check($numip,$time,$comment,$file);
+	flood_check($numip,$time,$comment,$file,$parent);
 
 	# Manager and deletion stuff - duuuuuh?
 
@@ -1559,8 +1559,17 @@ sub dnsbl_check {
 
 sub flood_check($$$$)
 {
-	my ($ip,$time,$comment,$file)=@_;
+	my ($ip,$time,$comment,$file,$parent)=@_;
 	my ($sth,$maxtime);
+
+	if(!$parent)
+	{
+		$maxtime=$time-(RENZOKU5);
+        $sth=$dbh->prepare( "SELECT count(`num`) FROM ".SQL_TABLE." WHERE parent=0 AND ip=? AND timestamp>$maxtime;" ) or make_sql_error();
+        $sth->execute($ip) or make_sql_error();
+		my $error = sprintf(S_RENZOKU5, (RENZOKU5)/60);
+        make_error($error) if ( ( $sth->fetchrow_array() )[0] );
+	}
 
 	if($file)
 	{
@@ -2098,7 +2107,10 @@ sub delete_post($$$$$;$$)
 
 		return S_BADDELPASS if($password and $$row{password} ne $password);
         return S_BADDELIP if($deletebyip and ($numip and $$row{ip} ne $numip));
+        return S_RENZOKU5 if ($$row{timestamp}+RENZOKU5 >= time() and !$admin_del);
         return S_LOCKED if($parent_post && $$parent_post{locked} and !$admin_del);
+        return "This was posted by a moderator or admin and cannot be deleted this way."
+		  if (!$admin_del and $$row{adminpost} eq 1);
 
 		unless($fileonly)
 		{
@@ -3338,7 +3350,7 @@ sub get_decoded_arrayref($)
 }
 
 #
-# SQL MIGRATION shit
+# SQL MIGRATION SHIT
 #
 
 sub update_db_schema
@@ -3427,17 +3439,19 @@ sub update_files_meta
     $sth->execute() or make_sql_error('migrate');
 
 	$sth2 = $dbh->prepare(
-		"UPDATE " . SQL_TABLE_IMG . " SET info=?, info_all=? WHERE num=?;"
+		"UPDATE " . SQL_TABLE_IMG . " SET uploadname=? info=?, info_all=? WHERE num=?;"
 	) or make_sql_error('migrate');
     while ($row = $sth->fetchrow_hashref()) {
 		$$row{image} =~ s!.*/!!;
 		$$row{image} = BOARD_IDENT . '/' . IMG_DIR . $$row{image};
 		if (-e $$row{image}) {
+			if($$row{uploadname} eq $$row{image})
+			{ $$row{uploadname}=~s!^src/!!; }
 			($info, $info_all) = get_meta_markup($$row{image}, CHARSET);
 		} else {
 			undef($info);
 			$info_all = "File not found";
 		}
-		$sth2->execute($info, $info_all, $$row{num}) or make_sql_error('migrate');
+		$sth2->execute($$row{uploadname}, $info, $info_all, $$row{num}) or make_sql_error('migrate');
 	}
 }

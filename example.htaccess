@@ -22,7 +22,6 @@ RewriteRule ^/([^/]+)/api/([^/]+)$ wakaba.pl?board=$1&json=$2 [L]
 RewriteRule ^([^/]+)/src/([^/]+)/([^/]+)$ $1/src/$2 [L,NS,DPI]
 </IfModule>
 
-
 <IfModule mod_headers.c>
 <Files *.html>
 Header add Expires "Mon, 26 Jul 1997 05:00:00 GMT"

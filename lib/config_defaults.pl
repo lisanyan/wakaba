@@ -22,7 +22,7 @@ BEGIN {
 
 	eval "use constant TITLE => 'Wakachan'" unless(defined &TITLE);
 	eval "use constant BOARD_NAME => 'Image board'" unless(defined &BOARD_NAME);
-	eval "use constant BOARD_DESC => ''" unless(defined &BOARD_DESC);
+	eval "use constant BOARD_DESC => 'Image board'" unless(defined &BOARD_DESC);
 	eval "use constant BANNER => 0" unless(defined &BANNER);
 	eval "use constant FAVICON => '/wakaba.ico'" unless(defined &FAVICON);
 	eval "use constant HOME => '../'" unless(defined &HOME);
@@ -65,11 +65,6 @@ BEGIN {
 	eval "use constant CAPTCHA_ROTATION => 0.3" unless(defined &CAPTCHA_ROTATION);
 	eval "use constant CAPTCHA_SPACING => 2.5" unless(defined &CAPTCHA_SPACING);
 
-	eval "use constant ENABLE_LOAD => 0" unless(defined &ENABLE_LOAD);
-	eval "use constant LOAD_SENDER_SCRIPT => 'sender.pl'" unless(defined &LOAD_SENDER_SCRIPT);
-	eval "use constant LOAD_LOCAL => 999" unless(defined &LOAD_LOCAL);
-	eval "use constant LOAD_HOSTS => ()" unless(defined &LOAD_HOSTS);
-
 	eval "use constant ENABLE_REPORTS => 1" unless(defined &ENABLE_REPORTS);
 	eval "use constant REPORTS_MAX => 5" unless(defined &REPORTS_MAX);
 	eval "use constant REPORTS_REASONLENGTH => 120" unless(defined &REPORTS_REASONLENGTH);
@@ -89,6 +84,8 @@ BEGIN {
 	eval "use constant RENZOKU => 5" unless(defined &RENZOKU);
 	eval "use constant RENZOKU2 => 10" unless(defined &RENZOKU2);
 	eval "use constant RENZOKU3 => 900" unless(defined &RENZOKU3);
+	eval "use constant RENZOKU4 => 60" unless(defined &RENZOKU4);
+	eval "use constant RENZOKU5 => 300" unless(defined &RENZOKU5);
 	eval "use constant NOSAGE_WINDOW => 1200" unless(defined &NOSAGE_WINDOW);
 	eval "use constant USE_SECURE_ADMIN => 0" unless(defined &USE_SECURE_ADMIN);
 	eval "use constant CHARSET => 'utf-8'" unless(defined &CHARSET);

@@ -1,15 +1,17 @@
 # post include
 
 use constant POST_VIEW_INCLUDE => q{
-<if !$parent && !$single>
+<if !$parent>
 <div id="t<var $num>_info" style="float:left"></div>
+<if !$search && !$single>
 <if !$thread><span id="t<var $num>_display" style="float:right"><a href="javascript:threadHide('t<var $num>')" id="togglet<var $num>"><const S_HIDETHREAD></a><ins><noscript><br/>(Javascript Required.)</noscript></ins></span></if>
+</if>
 <div id="t<var $num>">
 </if>
 
-<if $parent || $single>
+<if $parent>
 <table><tbody><tr>
-<td class="doubledash"><a href="<var get_reply_link($parent,0)>#<var $num>">&gt;&gt;</a></td>
+<td class="doubledash desktop"><a href="<var get_reply_link($parent,0)>#<var $num>">&gt;&gt;</a></td>
 <td class="reply" id="reply<var $num>">
 </if>
 
@@ -27,7 +29,8 @@ use constant POST_VIEW_INCLUDE => q{
 	</if>
 	<if $banned> <img src="<var root_path_to_filename('img/report.png')>" alt="Banned" onmouseover="Tip('<const S_BANNED>')" onmouseout="UnTip()" /> </if>
 	</span>
-	<span class="date"><var make_date($timestamp,DATE_STYLE,S_WEEKDAYS,S_MONTHS)></span>
+	<span class="date desktop"><var make_date($timestamp,DATE_STYLE,S_WEEKDAYS,S_MONTHS)></span>
+	<span class="date mobile"><var make_date($timestamp,'2ch',S_WEEKDAYS,S_MONTHS)></span>
 </label>
 
 <span class="reflink">
@@ -114,16 +117,18 @@ use constant POST_VIEW_INCLUDE => q{
     	</span>
 	</if>
 	<if !$thread>
-		<script type="text/javascript">
-			if (hiddenThreads.indexOf('t<var $num>,') != -1)
-			{
-				toggleHidden('t<var $num>');
-			}
+		<if !$search && !$single>
+			<script type="text/javascript">
+				if (hiddenThreads.indexOf('t<var $num>,') != -1)
+				{
+					toggleHidden('t<var $num>');
+				}
 		</script>
+		</if>
 	</if>
 </if>
 
-<if $parent || $single>
+<if $parent>
 	</td></tr></tbody></table>
 </if>
 };
