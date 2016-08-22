@@ -1,5 +1,4 @@
 # Wakaba 3.0.9 + mods by Alice
-====================================
 
 ## What this includes
 * Multiple file posting
