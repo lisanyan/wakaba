@@ -37,7 +37,7 @@
 3. Copy files from "board" to your new board folder
 4. Make sure `wakaba.pl`, and `captcha.pl` have the executable
    (+x) bit.
-5. Hit `wakaba.pl` in your browser.
+5. Hit `wakaba.pl?board=<my board>` in your browser.
 
 ###Upgrading from a standard Wakaba
 1. Replace all the board files with new ones.

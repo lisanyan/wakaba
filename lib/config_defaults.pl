@@ -22,7 +22,7 @@ BEGIN {
 
 	eval "use constant TITLE => 'Wakachan'" unless(defined &TITLE);
 	eval "use constant BOARD_NAME => 'Image board'" unless(defined &BOARD_NAME);
-	eval "use constant BOARD_DESC => 'Image board'" unless(defined &BOARD_DESC);
+	eval "use constant BOARD_DESC => ''" unless(defined &BOARD_DESC);
 	eval "use constant BANNER => 0" unless(defined &BANNER);
 	eval "use constant FAVICON => '/wakaba.ico'" unless(defined &FAVICON);
 	eval "use constant HOME => '../'" unless(defined &HOME);
