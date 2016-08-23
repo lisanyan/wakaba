@@ -42,13 +42,13 @@ BEGIN
 	}
 
 	require $board."/config.pl";;
+	require "lib/site_config.pl";
+	require "lib/config_defaults.pl";
 }
 
 BEGIN
 {
-	require "lib/site_config.pl";
-	require "lib/config_defaults.pl";
-	require "lib/strings_en.pl";	# edit this line to change the language
+	require "lib/strings_".BOARD_LANG.".pl";	# edit this line to change the language
 	require "lib/futaba_style.pl";	# edit this line to change the board style
 	require "captcha.pl";
 	require "lib/wakautils.pl";
@@ -187,7 +187,7 @@ return 1 if(caller); # stop here if we're being called externally
 			$as_staff,$postfix,$ajax,$admin_post,@files
 		);
 	}
-	elsif($task eq "delete" or $task eq decode_string(S_DELETE,CHARSET))
+	elsif($task eq "delete" or decode_string($task,CHARSET) eq S_DELETE)
 	{
 		my $password=$query->param("password");
 		my $fileonly=$query->param("fileonly");
@@ -200,7 +200,7 @@ return 1 if(caller); # stop here if we're being called externally
 
 		delete_stuff($password,$fileonly,$archive,$admin,$admin_del,$parent,$ajax,@posts);
 	}
-	elsif($task eq "report" or $task eq decode_string(S_REPORT,CHARSET))
+	elsif($task eq "report" or decode_string($task,CHARSET) eq S_REPORT)
 	{
 		my $sent=$query->param("sent");
 		my $reason=$query->param("reason");
@@ -249,6 +249,17 @@ return 1 if(caller); # stop here if we're being called externally
 	{
 		my $admin=$query->cookie("wakaadmin");
 		make_admin_ban_panel($admin);
+	}
+	elsif($task eq "ban")
+	{
+		my $admin=$query->cookie("wakaadmin");
+		my $comment=$query->param("reason");
+		my $ip=$query->param("ip");
+		my $expires=$query->param("expires");
+		my $post=$query->param("postid");
+		my $flag=$query->param("flag");
+		my $go=$query->param("go");
+		ban_post($admin,$ip,$post,$comment,$expires,$flag,$go)
 	}
 	elsif($task eq "addip")
 	{
@@ -1223,21 +1234,18 @@ sub post_stuff
 		$autosage=0;
 	}
 
-
 	# kill the name if anonymous posting is being enforced
 	if(FORCED_ANON)
 	{
 		$name='';
 		$trip='';
-		if($email=~/sage/i) { $email='sage'; }
-		else { $email=''; }
+		# if($email=~/sage/i) { $email='sage'; }
+		# else { $email=''; }
 	}
 
-	if(!ALLOW_LINK)
-	{
-		if($email) { $email='sage'; }
-		else { $email='' }
-	}
+	# kill the email
+	if($email) { $email='sage'; }
+	else { $email='' }
 
 	# clean up the inputs
 	$email=clean_string(decode_string($email,CHARSET));
@@ -1265,12 +1273,6 @@ sub post_stuff
 	flood_check($numip,$time,$comment,$file,$parent);
 
 	# Manager and deletion stuff - duuuuuh?
-
-	# generate date
-	# my $date=make_date($time,DATE_STYLE);
-
-	# generate ID code if enabled
-	# $date.=' ID:'.make_id_code($ip,$time,$email) if(DISPLAY_ID);
 
 	# copy file, do checksums, make thumbnail, etc
     my (@filename, @md5, @width, @height, @thumbnail, @tn_width, @tn_height, @info, @info_all, @uploadname);
@@ -1362,7 +1364,7 @@ sub post_stuff
 		else
 		{
 			if($parent) { make_http_forward(get_script_name().'?task=mpanel&board='.get_board_id()."&page=t".$parent.($num?"#$num":"")); }
-			elsif($num) { make_http_forward(get_script_name().'?task=mpanel&board='.get_board_id()."&page=t".$parent); }
+			elsif($num) { make_http_forward(get_script_name().'?task=mpanel&board='.get_board_id()."&page=t".$num); }
 			else { make_http_forward(get_script_name().'?task=mpanel&board='.get_board_id()); }
 		}
 	}
@@ -2042,7 +2044,7 @@ sub delete_stuff($$$$$$$@)
 	my (@errors, @ArrayOfErrors);
 	foreach $post (@posts)
 	{
-		my $ip = delete_post($post,$password,$fileonly,$deletebyip,$archive,$adminDel,$admin);
+		my $ip = delete_post($post,$password,$fileonly,$archive,$deletebyip,$adminDel,$admin);
         if ($ip !~ /:/ and $ip !~ /\d+\.\d+\.\d+\.\d+/) # Function returned with error string
         {
             push (@errors,"Post $post: ".$ip);
@@ -2056,7 +2058,7 @@ sub delete_stuff($$$$$$$@)
 	build_cache();
 
     if (@errors) {
-        my $errstring = S_PREWRAP, join("\n", @errors);
+        my $errstring = sprintf S_PREWRAP, join("\n", @errors);
         make_error($ajax ? \@ArrayOfErrors : $errstring);
 	}
 	else
@@ -2107,7 +2109,7 @@ sub delete_post($$$$$;$$)
 
 		return S_BADDELPASS if($password and $$row{password} ne $password);
         return S_BADDELIP if($deletebyip and ($numip and $$row{ip} ne $numip));
-        return S_RENZOKU5 if ($$row{timestamp}+RENZOKU5 >= time() and !$admin_del);
+        return S_RENZOKU4 if ($$row{timestamp}+RENZOKU4 >= time() and !$admin_del);
         return S_LOCKED if($parent_post && $$parent_post{locked} and !$admin_del);
         return "This was posted by a moderator or admin and cannot be deleted this way."
 		  if (!$admin_del and $$row{adminpost} eq 1);
@@ -2355,8 +2357,8 @@ sub make_admin_post_panel($$)
 	if ($page =~ /^t\d+$/)
 	{
 		$page =~ s/^t//g;
-		$sth=$dbh->prepare("SELECT * FROM ".SQL_TABLE." WHERE num=? OR parent=? ORDER BY lasthit DESC, num ASC;") or make_sql_error();
-		$sth->execute($page,$page) or make_sql_error();
+		$sth=$dbh->prepare("SELECT * FROM ".SQL_TABLE." WHERE num=? AND parent=0 ORDER BY lasthit DESC, num ASC;") or make_sql_error();
+		$sth->execute($page) or make_sql_error();
 
 		$row = get_decoded_hashref($sth);
 		make_error("Thread does not exist") if !$row;
@@ -2370,7 +2372,7 @@ sub make_admin_post_panel($$)
 		add_images_to_thread(@thread);
 		push @threads,{posts=>[@thread]};
 
-		$output = encode_string(POST_PANEL_TEMPLATE->(
+		$output = encode_string(PAGE_TEMPLATE->(
 			admin=>$isAdmin,
 			postform=>(ALLOW_TEXTONLY or ALLOW_IMAGES),
 			image_inp=>ALLOW_IMAGES,
@@ -2478,7 +2480,7 @@ sub make_admin_post_panel($$)
 		$prevpage=$page-1 if($page!=0);
 		$nextpage=$page+1 if($page!=$last_page);
 
-		$output = encode_string(POST_PANEL_TEMPLATE->(
+		$output = encode_string(PAGE_TEMPLATE->(
 			admin=>$isAdmin,
 			postform=>(ALLOW_TEXTONLY or ALLOW_IMAGES),
 			image_inp=>ALLOW_IMAGES,
@@ -2497,9 +2499,10 @@ sub make_admin_post_panel($$)
 sub make_admin_ban_panel($)
 {
 	my ($admin)=@_;
-	my ($sth,$row,@bans,$prevtype);
+	my ($sth,$row,@bans,$prevtype,$isAdmin);
 
-	check_password($admin,'');
+	if(check_password($admin,''))
+	{ $isAdmin = 1; }
 
 	clean_expired_bans();
 
@@ -2514,15 +2517,16 @@ sub make_admin_ban_panel($)
 	}
 
 	make_http_header();
-	print encode_string(BAN_PANEL_TEMPLATE->(admin=>$admin,bans=>\@bans));
+	print encode_string(BAN_PANEL_TEMPLATE->(admin=>$isAdmin,bans=>\@bans));
 }
 
 sub make_report_panel($)
 {
 	my ($admin)=@_;
-	my ($sth,$row,$prevboard,@reports);
+	my ($sth,$row,$prevboard,$isAdmin,@reports);
 
-	check_password($admin,'');
+	if(check_password($admin,''))
+	{ $isAdmin = 1; }
 
 	$sth=$dbh->prepare("SELECT * FROM ".SQL_REPORT_TABLE." ORDER BY board ASC,num DESC;") or make_sql_error();
 	$sth->execute() or make_sql_error();
@@ -2535,7 +2539,7 @@ sub make_report_panel($)
 	}
 
 	make_http_header();
-	print encode_string(REPORTS_TEMPLATE->(admin=>$admin,reports=>\@reports));
+	print encode_string(REPORTS_TEMPLATE->(admin=>$isAdmin,reports=>\@reports));
 }
 
 sub make_admin_orphans {
@@ -2714,6 +2718,29 @@ sub remove_admin_entry($$)
 	$sth->execute($num) or make_sql_error();
 
 	make_http_forward(get_script_name()."?task=bans&board=".get_board_id());
+}
+
+sub ban_post($$$$$$$)
+{
+	my ($admin,$ip,$postid,$reason,$expires,$flag,$go)=@_;
+	my ($sth,$row,@posts);
+
+	check_password($admin,'');
+
+	unless($go and $ip)
+	{
+		make_http_header();
+		print encode_string(BAN_SHORT_TEMPLATE->(
+			admin   => 1,
+			ip      => $ip,
+			postid  => $postid,
+		));
+	}
+	else
+	{
+		add_admin_entry($admin,'ipban',$reason,parse_range($ip,''),'',$expires,$postid,$flag);
+		# make_http_forward(get_script_name()."?task=bans&board=".get_board_id());
+	}
 }
 
 sub delete_all($$$$)

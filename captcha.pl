@@ -11,7 +11,7 @@ use lib '.';
 # BEGIN { require "lib/config.pl"; }
 BEGIN { require "lib/site_config.pl"; }
 BEGIN { require "lib/config_defaults.pl"; }
-BEGIN { require "lib/strings_en.pl"; }
+BEGIN { require "lib/strings_".BOARD_LANG.".pl"; }
 BEGIN { require "lib/wakautils.pl"; }
 
 

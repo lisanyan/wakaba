@@ -1,44 +1,337 @@
-/*mobile css*/
+/* media query */
 @media only screen and (max-width: 480px) {
-.desktop{display:none}
-.mobile{display:inline!important}
-.postarea td{width:95%;float:left}
-.postarea textarea{width:100%}
-table .reply{margin-left:0!important;float:none!important}
+
+.desktop {
+	display: none;
 }
-/*main*/
-html,body,ul,ol,p,pre,table,td,img{text-rendering:optimizeLegibility;font-variant-ligatures:common-ligatures;font-kerning:normal}
-body{margin:0;padding:8px;margin-bottom:auto}
-blockquote blockquote{margin-left:0}
-form{margin-bottom:0}
-.postarea{text-align:center}
-.postarea table{margin:0 auto;text-align:left}
-.reply blockquote,blockquote :last-child{margin-bottom:0}
-.userdelete{float:right;text-align:center;white-space:nowrap}
-.replypage .replylink{display:none}
-.reflink a,.filename a,.filetype a,.togglethread a{color:inherit;text-decoration:none}
-.reflink a:hover,.filename a:hover,.filetype a:hover{text-decoration:none}
-.filelink a img{display:block;margin:0 auto}
-.filelink a:active{top:0}
-.locked{font-weight:700;font-size:1.2em}
-.trap, .hidden, .mobile{display: none}
 
-.header{text-align:center;font:normal 1em serif}
-.slogan{font-size:1.2em;font-style:italic}
-.banner{padding-top:1em;clear:both}
-.banner img{width:300px;height:100px}
+.mobile {
+	display: inline!important;
+}
 
-.postername .postertrip{font-weight:400}
-.doubledash a{text-decoration:none;color:inherit}
-.blockquote p{text-align:justify;margin:0 0 15px}
-.spoiler{background-color:#000;color:#000;text-shadow:none}
-.spoiler a{color:#000}
-.spoiler:hover,.spoiler a:hover{color:#fff}
+.postarea td {
+	width: 95%;
+	float: left;
+}
 
-.file_container{float:left;margin-left:20px}
-.file{text-align:center;margin:0 1.2em 1.2em 0;float:left;display:block;vertical-align:top}
-.filesize{font-size:.85em}
-.filetype,.filedeleted{font:bold 2em sans-serif;width:200px;padding:.5em 0}
-.filebg{background-image:url(/img/erna-klein.png);background-position:bottom left;background-repeat:no-repeat}
-.filedeleted{color:inherit}
-.file_admin{display:table;font-size:small}
+.postarea textarea {
+	width: 100%;
+}
+
+}
+
+/* default styles */
+html, body, ul, ol, p, pre, table, td, img {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	/* linux cannot render fonts without help */
+	text-rendering: optimizeLegibility;
+	font-variant-ligatures: common-ligatures;
+	font-kerning: normal;
+}
+
+*:focus {
+	outline: 0;
+}
+
+strong, b, .boardname, .caption, .filetitle, .postblock, .postername, .sage, .dellist {
+	font-weight: bold;
+}
+
+em, i, .omittedposts, .notice, .slogan {
+	font-style: italic;
+}
+
+.slogan {
+	font-size: 1.2em;
+}
+
+hr {
+	border: none;
+	border-top: 1px solid #706B5E;
+	margin: 1em 0 1em 0;
+	clear: both;
+}
+
+code, pre {
+	font: normal 10pt monospace;
+}
+
+ul {
+	list-style-type: square;
+}
+
+td, th {
+	display: table-cell;
+	vertical-align: middle;
+}
+
+body {
+	font: normal 0.8em sans-serif;
+    padding:8px;
+    margin-bottom:auto;
+}
+
+a:hover {
+	text-decoration: none;
+}
+
+a:active {
+	position: relative;
+	top: 1px;
+}
+
+.adminbar {
+    clear: both;
+    float: right;
+    font-size: 1em;
+    margin-bottom: 5px;
+}
+
+.adminbar a {
+    /*font-weight: bold;*/
+}
+
+.header {
+	text-align: center;
+    clear:both;
+}
+
+.banner {
+	padding-top: 1em;
+	clear: both;
+}
+
+.banner img {
+	width: 300px;
+	height: 100px;
+}
+
+.boardname, .caption {
+	font-size: 2em;
+	margin-top: 0.5em;
+}
+
+.theader,
+.passvalid {
+    text-align: center;
+    padding: 2px;
+    clear: both;
+    font-weight: bold;
+    margin-bottom: .5em;
+    margin-top: .5em;
+}
+
+.dellist {
+    font-weight: bold;
+    text-align: center;
+}
+.delbuttons {
+    padding-bottom: 4px;
+    text-align: center;
+}
+
+blockquote blockquote {
+    margin-left:0
+}
+
+form {
+    margin-bottom:0
+}
+
+.postarea {
+	text-align: center;
+}
+
+.postarea table {
+	text-align: left;
+	margin: 0 auto;
+	border-spacing: 0.25em;
+}
+
+.postarea  #textField  img:hover {
+	cursor: pointer;
+}
+
+.postblock {
+	background-color: #706B5E;
+	color: #FFFFFF;
+	padding: 0.5em;
+}
+
+.postarea input[type='checkbox'], .postarea input[type='radio'] {
+	margin: 5px;
+}
+
+.postarea input#name, .postarea input#subject {
+	width: 20em;
+}
+
+input[type='text'], input[type='password'], textarea {
+	background-color: #FFFFFF;
+	font-family: monospace;
+	border: 1px solid #CCCCCC;
+	padding: 0.25em;
+}
+
+input[type='submit']:hover {
+	cursor: pointer;
+}
+
+.trap, .hidden, .mobile {
+	display: none;
+}
+
+div.rules ul {
+	margin-top: 1em;
+	margin-left: 1.6em;
+}
+
+.doubledash {
+	float: left;
+	margin-top: 0.5em;
+    vertical-align: top;
+    clear: both;
+}
+
+.doubledash a {
+    text-decoration:none;
+    color:inherit;
+}
+
+.post {
+	overflow: auto;
+}
+
+.reflink a, .filename a, .filetype a, .togglethread a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.reflink a:hover, .filename a:hover, .filetype a:hover {
+	text-decoration: underline;
+}
+
+.sage {
+	color: #B20000;
+}
+
+.filelink, .replylink {
+	font-size: 1.2em;
+}
+
+.filetitle {
+	font-size: 1.2em;
+}
+
+.reply {
+    background: #DDDDDD;
+    padding: 0;
+    margin: 0;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 5px;
+}
+
+.postername .tripcode {
+	font-weight: normal;
+}
+
+.backreflink del {
+	color: #702802;
+}
+
+.file_container {
+    margin: 0.2em 0 0 1.8em;
+	float: left;
+}
+
+.file {
+    background: transparent;
+	text-align: center;
+	margin: 0 1.2em 1.2em 0;
+	float: left;
+	display: block;
+	vertical-align: top;
+}
+
+.filesize {
+	font-size: 0.85em;
+}
+
+.filelink a img {
+	display: block;
+	margin: 0 auto;
+}
+
+.filelink a:active {
+	top: 0;
+}
+
+.filetype, .filedeleted {
+	font: bold 2em sans-serif;
+	width: 200px;
+	padding: 0.5em 0 0.5em 0;
+}
+
+.filebg {
+	background-image: url("/img/erna-klein.png");
+	background-position: bottom left;
+	background-repeat: no-repeat;
+}
+
+.filedeleted {
+	color: inherit;
+}
+
+blockquote.unkfunc, span.quote {
+	color: #B55636;
+	margin: 0;
+}
+
+blockquote p {
+    text-align:justify;
+    margin:0 0 15px;
+}
+
+.reply blockquote, blockquote :last-child {
+    margin-bottom: 0;
+}
+
+.text ul li, .text ol li {
+	list-style-position: inside;
+}
+
+.tldr {
+	margin-top: 1em;
+}
+
+.omittedposts {
+	margin-bottom: 0.5em;
+}
+
+.userdelete {
+    text-align: center;
+	float: right;
+}
+
+input[type='password'] {
+	width: 8em;
+}
+
+.error {
+	color: #B20000;
+	font-size: 1.5em;
+	text-align: center;
+}
+
+.footer {
+	text-align: center;
+	padding: 1em 0 1em 0;
+	clear: both;
+}
+
+.footer img {
+	vertical-align: middle;
+}

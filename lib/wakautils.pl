@@ -528,6 +528,7 @@ sub clean_string($;$)
 	$str=~s/'/&#39;/g;
 	$str=~s/,/&#44;/g; # clean up commas for some reason I forgot
 
+    $str =~ s/[\x{202A}-\x{202E}]//g; # remove RTL LTR
 	$str=~s/[\x00-\x08\x0b\x0c\x0e-\x1f]//g; # remove control chars
 
 	return $str;

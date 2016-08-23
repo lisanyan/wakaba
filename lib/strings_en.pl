@@ -27,9 +27,6 @@ use constant S_PICNAME => ''; # Prints text before upload name/link
 use constant S_REPLY => 'Reply'; # Prints text for reply link
 use constant S_VIEW => 'View'; # Prints text for reply link
 use constant S_OLD => 'Marked for deletion (old).'; # Prints text to be displayed before post is marked for deletion, see: retention
-use constant S_ABBR => '%d posts omitted. Click Reply to view.'; # Prints text to be shown when replies are hidden
-use constant S_ABBRIMG => '%d posts and %d images omitted. Click Reply to view.'; # Prints text to be shown when replies and images are hidden
-use constant S_ABBRTEXT => 'Comment too long. Click <a href="%s">here</a> to view the full text.';
 
 use constant S_REPDEL => 'Delete Post '; # Prints text next to S_DELPICONLY (left)
 use constant S_DELPICONLY => 'File Only'; # Prints text next to checkbox for file deletion (right)
@@ -80,7 +77,6 @@ use constant S_ADMINPASS => 'Admin password:'; # Prints login prompt
 
 use constant S_MANAPANEL => 'Management Panel'; # Defines Management Panel radio button--allows the user to view the management panel (overview of all posts)
 use constant S_MANABANS => 'Bans/Whitelist'; # Defines Bans Panel button
-use constant S_MANAPOST => 'Manager Post'; # Defines Manager Post radio button--allows the user to post using HTML code in the comment box
 use constant S_MANAREPORTS => 'Post Reports';
 use constant S_MANAREBUILD => 'Rebuild caches';							#
 use constant S_MANALOGOUT => 'Log out';									#
@@ -139,6 +135,8 @@ use constant S_BANTRUST => 'No captcha';
 use constant S_BANTRUSTTRIP => 'Tripcode';
 use constant S_BANSECONDS => '(seconds)';
 use constant S_BANEXPIRESNEVER => 'Never';
+use constant S_BANFLAG => 'Flag';
+use constant S_BANFLAGDESC => 'Mark post as banned';
 
 use constant S_BADIP => 'Bad IP value';
 

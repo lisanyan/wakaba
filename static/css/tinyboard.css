@@ -7,9 +7,7 @@ body {
 	padding: 0 5px;
 }
 div.adminbar {
-	clear: both;
 	color: #b86;
-	float: right;
 	font-size: 9pt;
 	margin-top: 3px;
 	text-align: right;
@@ -40,8 +38,11 @@ hr {
 	border-width: 1px 0 0;
 }
 /* Why the fuck isn't body>hr:first-child working? Let's use an ugly hack instead. */
-div.logo+hr {
+div.header+hr {
 	display: none;
+}
+.slogan {
+	margin-bottom: 1em;
 }
 td {
 	margin: 0;
@@ -87,8 +88,8 @@ input[type="text"], input[type="password"], textarea {
 	 * browser doing something right? More likely than you think!) */
 	width: 250px;
 }
-div.rules {
-	font-size: 10px;
+div.rules ul {
+	font-size: 12px;
 }
 .doubledash {
 	display: none;
@@ -103,6 +104,9 @@ div.rules {
 	display: inline-block;
 	margin: 0 16px;
 	padding: .3em .3em 0;
+}
+.omittedposts {
+    margin: 0 16px;
 }
 .highlight {
 	background: #f0c0b0;
@@ -187,5 +191,4 @@ table.userdelete br {
 }
 .sage {
     color:#FF0000;
-    font-weight: bold;
 }

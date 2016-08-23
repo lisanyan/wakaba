@@ -1,7 +1,7 @@
 use utf8;
 
 use constant S_HOME => 'Домой'; # Forwards to home page
-use constant S_ADMIN => 'Управление'; # Forwards to Management Panel
+use constant S_ADMIN => 'А'; # Forwards to Management Panel
 use constant S_RETURN => 'Назад'; # Returns to image board
 use constant S_POSTING => 'Режим отправки: ответ'; # Prints message in red bar atop the reply screen
 use constant S_BOARD => 'Доска';
@@ -28,9 +28,6 @@ use constant S_PICNAME => ''; # Prints text before upload name/link
 use constant S_REPLY => 'Ответить'; # Prints text for reply link
 use constant S_VIEW => 'Посмотреть'; # Prints text for reply link
 use constant S_OLD => 'Отмечено для удаления (устарел).'; # Prints text to be displayed before post is marked for deletion, see: retention
-use constant S_ABBR => 'Пропущено постов: %d. Кликни Ответить для просмотра.'; # Prints text to be shown when replies are hidden
-use constant S_ABBRIMG => 'Пропущено постов: %d, изображений: %d. Кликни Ответить для просмотра'; # Prints text to be shown when replies and images are hidden
-use constant S_ABBRTEXT => 'Комментарий слишком длинный. Кликни <a href="%s">сюда</a> чтобы увидеть его весь.';
 
 use constant S_REPDEL => 'Удалить пост '; # Prints text next to S_DELPICONLY (left)
 use constant S_DELPICONLY => 'Только файл'; # Prints text next to checkbox for file deletion (right)
@@ -53,6 +50,7 @@ use constant S_ADMINPASS => 'Пароль администратора:'; # Prin
 
 use constant S_MANAPANEL => 'Панель управления'; # Defines Management Panel radio button--allows the user to view the management panel (overview of all posts)
 use constant S_MANABANS => 'Баны/Белый список'; # Defines Bans Panel button
+use constant S_MANAREPORTS => 'Жалобы';
 use constant S_MANAORPH => 'Потерянные файлы';
 use constant S_MANASHOW => 'Показать';
 use constant S_MANAREBUILD => 'Пересоздать кеши';							#
@@ -62,8 +60,8 @@ use constant S_MANASUB => 'Отправить!'; # Defines name for submit butto
 
 use constant S_NOTAGS => 'Теги HTML разрешены. Никакого форматирования не будет, ставь переводы строк и абзацы самостоятельно.'; # Prints message on Management Board
 use constant S_NOTAGS2 => 'No format.'; # Prints message on Management Board
-
 use constant S_POSTASADMIN => 'Пост как админ';
+
 use constant S_REPORTSNUM => 'No. Поста';
 use constant S_REPORTSBOARD => 'Доска';
 use constant S_REPORTSDATE => 'Дата &amp; Время';
@@ -92,8 +90,8 @@ use constant S_ABBRIMG1 => 'и 1 Файл '; # Prints text to be shown when repl
 use constant S_ABBRIMG2 => 'и %d Файлов ';
 use constant S_ABBR_END => 'скрыто.';
 
-use constant S_ABBRTEXT1 => 'One more line';
-use constant S_ABBRTEXT2 => '%d more lines';
+use constant S_ABBRTEXT1 => '+1 строка';
+use constant S_ABBRTEXT2 => '+%d строк';
 
 use constant S_BANTABLE => '<th>Тип</th><th>Дата</th><th>Истекает</th>'
                             .'<th colspan="2">Значение</th><th>Текст</th><th>Действие</th>'; # Explains names for Ban Panel
@@ -111,6 +109,8 @@ use constant S_BANTRUST => 'Без капчи';
 use constant S_BANTRUSTTRIP => 'Трипкод';
 use constant S_BANSECONDS => '(секунды)';
 use constant S_BANEXPIRESNEVER => 'Никогда';
+use constant S_BANFLAG => 'Флаг';
+use constant S_BANFLAGDESC => 'Пометить пост';
 
 use constant S_SEARCHTITLE => 'Поиск';
 use constant S_SEARCH => 'Поиск';

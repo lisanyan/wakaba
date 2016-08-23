@@ -16,11 +16,12 @@ BEGIN {
 	eval "use constant SQL_TABLE_IMG => 'b_img'" unless(defined &SQL_TABLE);
 	eval "use constant SQL_ADMIN_TABLE => 'admin'" unless(defined &SQL_ADMIN_TABLE);
 	eval "use constant SQL_REPORT_TABLE => 'reports'" unless(defined &SQL_REPORT_TABLE);
-	eval "use constant BOARD_IDENT => 'b'" unless(defined &SQL_REPORT_TABLE);
+	eval "use constant BOARD_IDENT => 'b'" unless(defined &BOARD_IDENT);
+	eval "use constant BOARD_LANG => 'en'" unless(defined &BOARD_LANG);
 
 	eval "use constant USE_TEMPFILES => 1" unless(defined &USE_TEMPFILES);
 
-	eval "use constant TITLE => 'Wakachan'" unless(defined &TITLE);
+	eval "use constant TITLE => 'Wakab'" unless(defined &TITLE);
 	eval "use constant BOARD_NAME => 'Image board'" unless(defined &BOARD_NAME);
 	eval "use constant BOARD_DESC => ''" unless(defined &BOARD_DESC);
 	eval "use constant BANNER => 0" unless(defined &BANNER);
@@ -35,9 +36,9 @@ BEGIN {
 	eval "use constant S_ANOTEXT => ''" unless(defined &S_ANOTEXT);
 	eval "use constant S_ANOTITLE => ''" unless(defined &S_ANOTITLE);
 	eval "use constant SILLY_ANONYMOUS => ''" unless(defined &SILLY_ANONYMOUS);
-	eval "use constant DEFAULT_STYLE => 'Futaba'" unless(defined &DEFAULT_STYLE);
+	eval "use constant DEFAULT_STYLE => 'Photon'" unless(defined &DEFAULT_STYLE);
 
-	eval "use constant MAX_KB => 1000" unless(defined &MAX_KB);
+	eval "use constant MAX_KB => 3072" unless(defined &MAX_KB);
 	eval "use constant MAX_W => 200" unless(defined &MAX_W);
 	eval "use constant MAX_H => 200" unless(defined &MAX_H);
 	eval "use constant MAX_RES => 20" unless(defined &MAX_RES);
@@ -65,7 +66,7 @@ BEGIN {
 	eval "use constant CAPTCHA_ROTATION => 0.3" unless(defined &CAPTCHA_ROTATION);
 	eval "use constant CAPTCHA_SPACING => 2.5" unless(defined &CAPTCHA_SPACING);
 
-	eval "use constant ENABLE_REPORTS => 1" unless(defined &ENABLE_REPORTS);
+	eval "use constant ENABLE_REPORTS => 0" unless(defined &ENABLE_REPORTS);
 	eval "use constant REPORTS_MAX => 5" unless(defined &REPORTS_MAX);
 	eval "use constant REPORTS_REASONLENGTH => 120" unless(defined &REPORTS_REASONLENGTH);
 
@@ -125,13 +126,12 @@ BEGIN {
 
 	eval "use constant FILETYPES => ()" unless(defined &FILETYPES);
 	eval "use constant FILESIZES => ()" unless(defined &FILESIZES);
+	eval "use constant FILEGROUPS => ()" unless(defined &FILEGROUPS);
+	eval "use constant GROUPORDER => ''" unless(defined &GROUPORDER);
 
 	eval "use constant ENABLE_DNSBL_CHECK => 1" unless(defined &ENABLE_DNSBL_CHECK);
 	eval "use constant DNSBL_TIMEOUT => 0.1" unless(defined &DNSBL_TIMEOUT);
-	eval q{use constant DNSBL_INFOS => [
-	    	[ 'tor.dnsbl.sectoor.de', ['127.0.0.1'] ],
-	    	[ 'torexit.dan.me.uk', ['127.0.0.100'] ],
-		]} unless(defined &DNSBL_INFOS);
+	eval q{use constant DNSBL_INFOS => []} unless(defined &DNSBL_INFOS);
 
 	eval "use constant WAKABA_VERSION => '3.0.9'" unless(defined &WAKABA_VERSION);
 }

@@ -4,6 +4,9 @@ var lang = {
 	hidden: ' hidden',
 };
 
+var lastopenfield = 0;
+var lastbanfield = 0;
+
 function $each(arr, fn) {
 	for(var el, i = 0; el = arr[i++];)
 		fn(el);
@@ -342,7 +345,7 @@ function expand_image(element, org_width, org_height, thumb_width, thumb_height,
 	// var img = element;
 	var img = element.firstElementChild || element.children[0];
 	var org = img.parentNode.href;
-	var post = img.parentNode.parentNode.parentNode.parentNode.parentNode;
+	var post = element.parentNode.parentNode.parentNode.parentNode.parentNode;
 
 	if (img.src != org) {
 		img.src = org;
