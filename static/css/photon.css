@@ -73,9 +73,6 @@ a:hover {
 blockquote {
     margin: .5em .5em .5em 2em;
 }
-.reply blockquote {
-    margin: .5em;
-}
 .doubledash {
     display: none;
 }

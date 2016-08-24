@@ -111,7 +111,7 @@ div.rules ul {
 .highlight {
 	background: #f0c0b0;
 }
-.reply blockquote, blockquote :last-child {
+.text {
 	margin-bottom: .8em;
 }
 .reply blockquote>br {

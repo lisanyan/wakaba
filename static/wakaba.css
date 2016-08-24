@@ -39,7 +39,7 @@ strong, b, .boardname, .caption, .filetitle, .postblock, .postername, .sage, .de
 	font-weight: bold;
 }
 
-em, i, .omittedposts, .notice, .slogan {
+em, i, .omittedposts, .refmap, .notice, .slogan {
 	font-style: italic;
 }
 
@@ -132,8 +132,9 @@ a:active {
     text-align: center;
 }
 
-blockquote blockquote {
-    margin-left:0
+blockquote {
+    margin: 0;
+    padding: 0
 }
 
 form {
@@ -200,6 +201,10 @@ div.rules ul {
     color:inherit;
 }
 
+.post_head {
+    padding: 0.4em 0.4em 0.1em 0.4em;
+}
+
 .post {
 	overflow: auto;
 }
@@ -234,6 +239,15 @@ div.rules ul {
     border-radius: 5px;
 }
 
+.text {
+	margin: 0 2em 1.2em 1.2em;
+	word-wrap: break-word;
+}
+
+.post_body {
+	padding: 1.2em 0 0 1.2em;
+}
+
 .postername .tripcode {
 	font-weight: normal;
 }
@@ -243,7 +257,6 @@ div.rules ul {
 }
 
 .file_container {
-    margin: 0.2em 0 0 1.8em;
 	float: left;
 }
 
@@ -290,15 +303,6 @@ blockquote.unkfunc, span.quote {
 	margin: 0;
 }
 
-blockquote p {
-    text-align:justify;
-    margin:0 0 15px;
-}
-
-.reply blockquote, blockquote :last-child {
-    margin-bottom: 0;
-}
-
 .text ul li, .text ol li {
 	list-style-position: inside;
 }
@@ -307,8 +311,18 @@ blockquote p {
 	margin-top: 1em;
 }
 
-.omittedposts {
+.omittedposts, .refmap {
 	margin-bottom: 0.5em;
+}
+
+.refmap {
+    display: block;
+    margin-top: 1em;
+}
+
+div[id^=pstprev_] .omittedposts
+{
+	display: none
 }
 
 .userdelete {

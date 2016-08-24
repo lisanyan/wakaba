@@ -6,18 +6,16 @@ use constant POST_VIEW_INCLUDE => q{
 <if !$thread && !$single><span id="t<var $num>_display" style="float:right"><a href="javascript:threadHide('t<var $num>')" id="togglet<var $num>"><const S_HIDETHREAD></a><ins><noscript><br/>(Javascript Required.)</noscript></ins></span></if>
 <div class="thread" id="t<var $num>">
 <div class="thread_OP" id="<var $num>">
+
+<div class="thread_head">
 </if>
 
 <if $parent>
 <table class="post" id="<var $num>"><tbody><tr>
 <td class="doubledash desktop"><a href="<var get_reply_link($parent,0)>#<var $num>">&gt;&gt;</a></td>
 <td class="reply" id="reply<var $num>">
-</if>
 
-<if SHOW_FLAGS && !$adminpost && !$admin> 
-<div class="hidden" id="postinfo_<var $num>">
-	<var (get_post_flag($location))[1]>
-</div>
+<div class="post_head">
 </if>
 
 <label>
@@ -32,6 +30,9 @@ use constant POST_VIEW_INCLUDE => q{
 		</if>
 		<if $banned><img src="<var root_path_to_filename('img/report.png')>" alt="Banned" onmouseover="Tip('<const S_BANNED>')" onmouseout="UnTip()" /> </if>
 		<if SHOW_FLAGS && !$adminpost && !$admin>
+			<span class="hidden" id="postinfo_<var $num>">
+				<var (get_post_flag($location))[1]>
+			</span>
 			<span onmouseover="TagToTip('postinfo_<var $num>', DELAY, 0)" onmouseout="UnTip()"><var (get_post_flag($location))[0]></span>
 		</if>
 	</span>
@@ -76,7 +77,9 @@ use constant POST_VIEW_INCLUDE => q{
 	&nbsp;[<a href="<var get_reply_link($num,0,$admin)>"><if !$locked><const S_REPLY><else><const S_VIEW></if></a>]
 </if>
 
-<br />
+</div>
+
+<div class="post_body">
 
 <if $files><div class="file_container"></if>
 <loop $files>
@@ -87,7 +90,7 @@ use constant POST_VIEW_INCLUDE => q{
 		<var get_pretty_html($info_all, "\n\t\t")>
 	</div>
     <div class="filename"><const S_PICNAME><a target="_blank" title="<var $uploadname>" href="<var expand_image_filename($image)>/<var get_urlstring($uploadname)>"><var $displayname></a></div>
-	<div class="filesize"><!--compat for dollscript--><a href="<var expand_image_filename($image)>"></a><var get_displaysize($size, DECIMAL_MARK)><if $width && $height>, <var $width>&nbsp;&times;&nbsp;<var $height></if><if $info>, <var $info></if></div>
+	<div class="filesize"><!--compat for dollscript--><if $size><a href="<var expand_image_filename($image)>"></a></if><var get_displaysize($size, DECIMAL_MARK)><if $width && $height>, <var $width>&nbsp;&times;&nbsp;<var $height></if><if $info>, <var $info></if></div>
     <if $thumbnail>
         <div class="filelink" onmouseover="TagToTip('imageinfo_<var md5_hex($image)>', TITLE, '<const S_FILEINFO>', WIDTH, -450)" onmouseout="UnTip()">
 		<a target="_blank" href="<var expand_image_filename($image)>" <if get_extension($image)=~/^JPG|PNG|GIF/>onclick="return expand_image(this, <var $width>, <var $height>, <var $tn_width>, <var $tn_height>, '<var expand_filename($thumbnail)>')"</if>>
@@ -119,17 +122,19 @@ use constant POST_VIEW_INCLUDE => q{
 
 <if $abbrev>
 	<div class="hidden" id="posttext_full_<var $num>">
-    	<blockquote><var $comment_full></blockquote>
+    	<blockquote class="text"><var $comment_full></blockquote>
 	</div>
 </if>
 
 <div id="posttext_<var $num>">
-<blockquote>
+<blockquote class="text">
 	<var $comment>
 	<if $abbrev>
 		<p class="abbrev">[<a href="<var get_reply_link($num,$parent)>" onclick="return expand_post('<var $num>')"><var $abbrev></a>]</p>
 	</if>
 </blockquote>
+</div>
+
 </div>
 
 <if !$parent>
@@ -147,6 +152,7 @@ use constant POST_VIEW_INCLUDE => q{
 		</script>
 	</if>
 </if>
+
 
 <if !$parent>
 	</div>
