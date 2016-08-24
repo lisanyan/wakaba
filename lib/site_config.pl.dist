@@ -1,17 +1,54 @@
+#
 # Global config
+#
+
 #use constant SQL_ADMIN_TABLE => 'admin';		# Table used for admin information
 #use constant SQL_PROXY_TABLE => 'proxy';		# Table used for proxy information
 use constant SECRET => 'CHANGEME';				# Cryptographic secret. CHANGE THIS to something totally random, and long.
 use constant SQL_DBI_SOURCE => 'DBI:mysql:database=CHANGEME;host=localhost'; # DBI data source string (mysql version, put server and database name in here)
 use constant SQL_USERNAME => 'CHANGEME';		# MySQL login name
 use constant SQL_PASSWORD => 'CHANGEME';		# MySQL password
-use constant USE_TEMPFILES => 1;				# Set this to 1 under Unix and 0 under Windows! (Use tempfiles when creating pages)
 use constant DEFAULT_BOARD => 'b';	# default board to redirect to from /
 
 # Board stuff
-use constant BOARD_LANG => 'ru'; # board language
+use constant BOARD_LANG => 'en'; # board language
+use constant USE_TEMPFILES => 1;				# Set this to 1 under Unix and 0 under Windows! (Use tempfiles when creating pages)
 #use constant DEFAULT_STYLE => 'Photon'; 		# Title of the default style for the board.
 #use constant ERRORLOG => '';					# Writes out all errors seen by user, mainly useful for debugging
+
+# Captcha
+use constant CAPTCHA_MODE => 1;
+use constant CAPTCHA_SKIP => '';
+use constant SQL_CAPTCHA_TABLE => 'captcha';	# Global captcha table for all boards
+use constant CAPTCHA_LIFETIME => 1440;			# Captcha lifetime in seconds
+use constant CAPTCHA_SCRIPT => '/captcha.pl';
+use constant CAPTCHA_HEIGHT => 18;
+use constant CAPTCHA_SCRIBBLE => 0.2;
+use constant CAPTCHA_SCALING => 0.15;
+use constant CAPTCHA_ROTATION => 0.3;
+use constant CAPTCHA_SPACING => 2.5;
+
+# Ban stuff
+use constant ENABLE_DNSBL_CHECK => 1;
+use constant DNSBL_TIMEOUT => 0.1;
+use constant DNSBL_INFOS => [
+    [ 'tor.dnsbl.sectoor.de', ['127.0.0.1'] ],
+    [ 'torexit.dan.me.uk', ['127.0.0.100'] ],
+    # [ 'b.barracudacentral.org', ['127.0.0.2'] ],
+    # [ 'dnsbl.dronebl.org', ['127.0.0.1', '127.0.0.8', '127.0.0.9', '127.0.0.14'] ],
+    # [ 'http.dnsbl.sorbs.net', ['127.0.0.2'] ],
+    # [ 'socks.dnsbl.sorbs.net', ['127.0.0.3'] ],
+];
+
+use constant BAN_DATES => [	# Ban expiration options to show in the admin panel.
+	{ label=>'Never', time=>0 },
+    { label=>'2 hours', time=>3600*2 },
+	{ label=>'3 days', time=>3600*24*3 },
+    { label=>'1 week', time=>3600*24*7 },
+	{ label=>'2 weeks', time=>3600*24*14 },
+	{ label=>'1 month', time=>3600*24*30 },
+	{ label=>'1 year', time=>3600*24*365 }
+];
 
 # Files
 use constant FILEGROUPS => (
@@ -28,36 +65,5 @@ use constant GROUPORDER => 'image video archive audio doc other'; # other has to
 #use constant CONVERT_COMMAND => 'convert';		# location of the ImageMagick convert command (usually just 'convert', but sometime a full path is needed)
 #use constant VIDEO_CONVERT_COMMAND => 'ffmpeg';
 ##use constant CONVERT_COMMAND => '/usr/X11R6/bin/convert';
-
-# Captcha
-use constant SQL_CAPTCHA_TABLE => 'captcha';	# Global captcha table for all boards
-use constant CAPTCHA_LIFETIME => 1440;			# Captcha lifetime in seconds
-use constant CAPTCHA_SCRIPT => '/captcha.pl';
-use constant CAPTCHA_HEIGHT => 18;
-use constant CAPTCHA_SCRIBBLE => 0.2;
-use constant CAPTCHA_SCALING => 0.15;
-use constant CAPTCHA_ROTATION => 0.3;
-use constant CAPTCHA_SPACING => 2.5;
-
-# Ban stuff
-use constant ENABLE_DNSBL_CHECK => 1;
-use constant DNSBL_TIMEOUT => 0.1;
-use constant DNSBL_INFOS => [
-    [ 'tor.dnsbl.sectoor.de', ['127.0.0.1'] ],
-    [ 'torexit.dan.me.uk', ['127.0.0.100'] ],
-    # [ 'dnsbl.dronebl.org', ['127.0.0.1', '127.0.0.8', '127.0.0.9', '127.0.0.14'] ],
-    # [ 'http.dnsbl.sorbs.net', ['127.0.0.2'] ],
-    # [ 'socks.dnsbl.sorbs.net', ['127.0.0.3'] ],
-];
-
-use constant BAN_DATES => [	# Ban expiration options to show in the admin panel.
-	{ label=>'Never', time=>0 },
-    { label=>'2 hours', time=>3600*2 },
-	{ label=>'3 days', time=>3600*24*3 },
-    { label=>'1 week', time=>3600*24*7 },
-	{ label=>'2 weeks', time=>3600*24*14 },
-	{ label=>'1 month', time=>3600*24*30 },
-	{ label=>'1 year', time=>3600*24*365 }
-];
 
 'nyak';

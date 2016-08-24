@@ -109,6 +109,8 @@ use constant S_BANTRUST => 'Без капчи';
 use constant S_BANTRUSTTRIP => 'Трипкод';
 use constant S_BANSECONDS => '(секунды)';
 use constant S_BANEXPIRESNEVER => 'Никогда';
+use constant S_BANASNUMLABEL => 'AS номер';
+use constant S_BANASNUM => 'Бан сети'; # ban asn submit
 use constant S_BANFLAG => 'Флаг';
 use constant S_BANFLAGDESC => 'Пометить пост';
 
@@ -159,6 +161,8 @@ use constant S_NOTALLOWED => 'Отправка не разрешена.'; # Retu
 use constant S_UNUSUAL => 'Аномальный ответ.'; # Returns error for abnormal reply? (this is a mystery!)
 use constant S_BADHOST => 'Хост забанен.'; # Returns error for banned host ($badip string)
 use constant S_BADHOSTPROXY => 'Прокси забанено.'; # Returns error for banned proxy ($badip string)
+use constant S_ASBAN => 'Бан AS сети';
+use constant S_DNSBL => 'Ваш IP находитсяв черном списке <em>%s</em>!'; # error string for tor node check
 use constant S_RENZOKU => 'Обнаружен флуд, пост отвергнут.'; # Returns error for $sec/post spam filter
 use constant S_RENZOKU2 => 'Обнаружен флуд, файл отвергнут.'; # Returns error for $sec/upload spam filter
 use constant S_RENZOKU3 => 'Обнаружен флуд.'; # Returns error for $sec/similar posts spam filter.
@@ -180,17 +184,22 @@ use constant S_SPAM => 'Спамеры идут лесом.'; # Returns error wh
 use constant S_NOTEXISTPOST => 'Пост No.%d не существует.';
 
 use constant S_LOCKED => 'Тред закрыт.';
+use constant S_NOACCESS => 'Недостаточно привелегий';
 use constant S_NOBOARDACC => 'У вас нет доступа к этой доске, доступные: %s<br /><a href="%s?task=logout">Выход</a>';
 use constant S_PREWRAP => '<span class="prewrap">%s</span>';
 use constant S_THREADLOCKED => '<strong>Тред %s</strong> закрыт. Вы не можете отвечать в этот тред.';
+
+# tooltip
 use constant S_FILEINFO => 'Информация';
 use constant S_FILEDELETED => 'Файл удален';
 use constant S_FILENAME => 'Имя файла:';
+use constant S_POSTINFO => 'Информация';
+
 use constant S_ICONAUTOSAGE => 'Бамплимит';
 use constant S_ICONLOCKED => 'Закрыт';
 use constant S_BANNED => 'Пользователь был забанен за этот пост';
 
-use constant S_DNSBL => 'Ваш IP находитсяв черном списке <em>%s</em>!'; # error string for tor node check
+# leave this alone
 use constant S_AUTOBAN => 'Spambot [Auto Ban]'; # Ban reason for automatically created bans
 
 use constant S_SQLCONF => 'Ошибка подключения SQL'; # Database connection failure

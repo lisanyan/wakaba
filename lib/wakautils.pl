@@ -6,6 +6,7 @@ use Time::Local;
 use Socket;
 use IO::Socket::INET;
 use Net::IP qw(:PROC); # IPv6 conversions
+use Geo::IP; # geo
 use Image::ExifTool; # Meta info
 
 my $has_md5=0;
@@ -149,6 +150,99 @@ sub get_meta_markup {
 	$markup .= $archive;
 
 	return ($info, $markup);
+}
+
+#
+# GeoIP Stuff
+#
+
+sub get_geolocation($) {
+	my ($ip) = @_;
+	my $loc = "unk";
+
+	my ($country_code,$country_name,$region_name,$city);
+	my ($gi,$city_record);
+	# my $path="/usr/local/share/GeoIP/";
+	my $path="./lib/GeoIP/";
+
+	# IPv6 only works with CAPI
+	if ($ip =~ /:/ and Geo::IP->api eq 'CAPI') {
+		eval '$gi = Geo::IP->open($path . "GeoLiteCityv6.dat")';
+		unless ($@ or !$gi)
+		{
+			$gi->set_charset(&GEOIP_CHARSET_UTF8) if $has_encode;
+			$city_record = $gi->record_by_addr_v6($ip);
+		}
+		else # fall back to country if city is not installed
+		{
+			eval '$gi = Geo::IP->open($path . "GeoIPv6.dat")';
+			$loc = $gi->country_code_by_addr_v6($ip) unless ($@ or !$gi);
+		}
+	}
+
+	# IPv4
+	if ($ip !~ /:/ and $ip =~ /\./) {
+		eval '$gi = Geo::IP->open($path . "GeoLiteCity.dat")';
+		unless ($@ or !$gi)
+		{
+			$gi->set_charset(&GEOIP_CHARSET_UTF8) if $has_encode;
+			$city_record = $gi->record_by_addr($ip);
+		}
+		else # fall back to country if city is not installed
+		{
+			eval '$gi = Geo::IP->open($path . "GeoIP.dat")';
+			$loc = $gi->country_code_by_addr($ip) unless ($@ or !$gi);
+		}
+	}
+
+	if ($city_record) {
+		$loc=$city_record->country_code;
+		$country_name=$city_record->country_name;
+		$region_name=$city_record->region_name;
+		$city=$city_record->city;
+	}
+
+	return ($city,$region_name,$country_name,$loc);
+}
+
+sub need_captcha($$$) {
+	my ($mode,$allowed_list,$location) = @_;
+	my @allowed = split(' ',$allowed_list);
+
+	return 0 if($mode == 0);
+	return 1 if($mode == 1);
+
+	foreach my $country (@allowed)
+	{
+		return 0 if($country eq $location);
+	}
+
+	return 1;
+}
+
+sub get_as_info($) {
+	my ($ip) = @_;
+	my ($gi,$as_num,$as_info);
+	# my $path="/usr/local/share/GeoIP/";
+	my $path="./lib/GeoIP/";
+
+	# IPv6 only works with CAPI
+	if ($ip =~ /:/ and Geo::IP->api eq 'CAPI')
+	{
+		eval '$gi = Geo::IP->open($path . "GeoIPASNumv6.dat");';
+		$as_info = $gi->name_by_addr_v6($ip) unless ($@ or !$gi);
+	}
+
+	# IPv4
+	if ($ip !~ /:/ and $ip =~ /\./)
+	{
+		eval '$gi = Geo::IP->open($path . "GeoIPASNum.dat");';
+		$as_info = $gi->name_by_addr($ip) unless ($@ or !$gi);
+	}
+
+	$as_info =~ /^AS(\d+) /;
+	$as_num = $1;
+	return ($as_num, $as_info);
 }
 
 #
@@ -1660,6 +1754,10 @@ sub rol($$) { my ($x,$n); ( $x = shift ) << ( $n = 31 & shift ) | 2**$n - 1 & $x
 sub ror($$) { rol(shift,32-(31&shift)); } # rorororor
 sub mul($$) { my ($a,$b)=@_; return ( (($a>>16)*($b&65535)+($b>>16)*($a&65535))*65536+($a&65535)*($b&65535) )%4294967296 }
 
+#
+# HTML stuff
+#
+
 sub get_urlstring($) {
     my ($filename) = @_;
 	$filename =~ s/ /%20/g;
@@ -1713,5 +1811,57 @@ sub get_pretty_html($$) {
 	$text =~ s!<br />!<br />$add!g;
 	return $text;
 }
+
+sub get_post_flag($) {
+	my ($data) = @_;
+	my @items = split(/<br \/>/, $data);
+	return '' unless (@items);
+
+	my $location;
+	# country flag
+	$items[0] = 'UNKNOWN' if ($items[0] eq 'unk' or $items[0] eq 'A1' or $items[0] eq 'A2' or $items[0] eq 'v6');
+	my $flag = '<img src="/img/flags/' . $items[0] . '.PNG" title="' . $items[0] . '" alt="' . $items[0] . '" />';
+
+	if (scalar @items == 1)
+	{ # for legacy entries
+		$location = $flag . $items[0];
+	}
+	else
+	{ # geo location
+		my @loc = grep {$_} ($items[1], $items[2], $items[3]);
+		$location = join(', ', @loc);
+	}
+
+
+	return ($flag, $location);
+}
+
+sub get_post_info($$) {
+	my ($data, $board) = @_;
+	my @items = split(/<br \/>/, $data);
+	return '(n/a)' unless (@items);
+
+	# country flag
+	$items[0] = 'UNKNOWN' if ($items[0] eq 'unk' or $items[0] eq 'A1' or $items[0] eq 'A2' or $items[0] eq 'v6');
+	my $flag = '<img src="/img/flags/' . $items[0] . '.PNG" alt="" /> ';
+
+	if (scalar @items == 1) { # for legacy entries
+		return $flag . $items[0];
+	} else {
+		# geo location
+		my @loc = grep {$_} ($items[1], $items[2], $items[3]);
+		my $location = join(', ', @loc);
+
+		# as num, name and ban link
+		$items[4] =~ /^AS(\d+) /;
+		$items[4] .= ' [<a href="' . $ENV{SCRIPT_NAME}
+			. '?task=addstring&amp;type=asban&amp;board=' . $board
+			. '&amp;string=' . $1
+			. '&amp;comment=' . urlenc($items[4]) . '">Ban</a>]';
+
+		return $flag . $location . '<br />' . $items[4];
+	}
+}
+
 
 1;

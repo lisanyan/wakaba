@@ -37,6 +37,7 @@ BEGIN {
 	eval "use constant S_ANOTITLE => ''" unless(defined &S_ANOTITLE);
 	eval "use constant SILLY_ANONYMOUS => ''" unless(defined &SILLY_ANONYMOUS);
 	eval "use constant DEFAULT_STYLE => 'Photon'" unless(defined &DEFAULT_STYLE);
+	eval "use constant SHOW_FLAGS => 0" unless(defined &SHOW_FLAGS);
 
 	eval "use constant MAX_KB => 3072" unless(defined &MAX_KB);
 	eval "use constant MAX_W => 200" unless(defined &MAX_W);
@@ -56,7 +57,8 @@ BEGIN {
 	eval "use constant MAX_SEARCH_RESULTS => 200" unless (defined &MAX_SEARCH_RESULTS);
 	eval "use constant MAX_STATS => 25" unless (defined &MAX_STATS);
 
-	eval "use constant ENABLE_CAPTCHA => 1" unless(defined &ENABLE_CAPTCHA);
+    eval "use constant CAPTCHA_MODE => 1"  unless ( defined &CAPTCHA_MODE );
+    eval "use constant CAPTCHA_SKIP => ''" unless ( defined &CAPTCHA_SKIP );
 	eval "use constant SQL_CAPTCHA_TABLE => 'captcha'" unless(defined &SQL_CAPTCHA_TABLE);
 	eval "use constant CAPTCHA_LIFETIME => 1440" unless(defined &CAPTCHA_LIFETIME);
 	eval "use constant CAPTCHA_SCRIPT => '/captcha.pl'" unless(defined &CAPTCHA_SCRIPT);

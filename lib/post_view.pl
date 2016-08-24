@@ -3,7 +3,7 @@
 use constant POST_VIEW_INCLUDE => q{
 <if !$parent>
 <div id="t<var $num>_info" style="float:left"></div>
-<if !$thread && !$search && !$single><span id="t<var $num>_display" style="float:right"><a href="javascript:threadHide('t<var $num>')" id="togglet<var $num>"><const S_HIDETHREAD></a><ins><noscript><br/>(Javascript Required.)</noscript></ins></span></if>
+<if !$thread && !$single><span id="t<var $num>_display" style="float:right"><a href="javascript:threadHide('t<var $num>')" id="togglet<var $num>"><const S_HIDETHREAD></a><ins><noscript><br/>(Javascript Required.)</noscript></ins></span></if>
 <div class="thread" id="t<var $num>">
 <div class="thread_OP" id="<var $num>">
 </if>
@@ -14,17 +14,26 @@ use constant POST_VIEW_INCLUDE => q{
 <td class="reply" id="reply<var $num>">
 </if>
 
+<if SHOW_FLAGS && !$adminpost && !$admin> 
+<div class="hidden" id="postinfo_<var $num>">
+	<var (get_post_flag($location))[1]>
+</div>
+</if>
+
 <label>
 	<input type="checkbox" name="delete" value="<var $num>" />
 	<span class="filetitle"><var $subject></span>
 	<span class="postername"><if $adminpost><span class="adminname"><var $name></span><else><var $name></if><if $trip><span class="tripcode"><var $trip></span></if></span>
-	<if DISPLAY_ID && !$adminpost><span class="posterid">ID: <var make_id_code(dec_to_dot($ip), $timestamp, $email)></span></if>
+	<if DISPLAY_ID and !$adminpost><span class="posterid">ID: <var make_id_code(dec_to_dot($ip), $timestamp, $email)></span></if>
 	<span class="posticons">
 		<if !$parent>
 			<if $locked><img src="<var root_path_to_filename('img/locked.png')>" alt="Locked" onmouseover="Tip('<const S_ICONLOCKED>')" onmouseout="UnTip()" /> </if>
 			<if $autosage><img src="<var root_path_to_filename('img/autosage.gif')>" alt="<const S_LOCKEDALT>" onmouseover="Tip('<const S_ICONAUTOSAGE>')" onmouseout="UnTip()" /> </if>
 		</if>
-		<if $banned> <img src="<var root_path_to_filename('img/report.png')>" alt="Banned" onmouseover="Tip('<const S_BANNED>')" onmouseout="UnTip()" /> </if>
+		<if $banned><img src="<var root_path_to_filename('img/report.png')>" alt="Banned" onmouseover="Tip('<const S_BANNED>')" onmouseout="UnTip()" /> </if>
+		<if SHOW_FLAGS && !$adminpost && !$admin>
+			<span onmouseover="TagToTip('postinfo_<var $num>', DELAY, 0)" onmouseout="UnTip()"><var (get_post_flag($location))[0]></span>
+		</if>
 	</span>
 	<span class="date desktop"><var make_date($timestamp,DATE_STYLE,S_WEEKDAYS,S_MONTHS)></span>
 	<span class="date mobile"><var make_date($timestamp,'2ch',S_WEEKDAYS,S_MONTHS)></span>
@@ -39,7 +48,13 @@ use constant POST_VIEW_INCLUDE => q{
 </span>
 
 <if $admin>
-	<span>[<var dec_to_dot($ip)>]
+	<if !$adminpost>
+		<div class="hidden" id="postinfo_<var $num>">
+			<var get_post_info($location, &BOARD_IDENT)>
+		</div>
+		<span onmouseover="TagToTip('postinfo_<var $num>', TITLE, '<const S_POSTINFO>', DELAY, 0, CLICKSTICKY, true)" onmouseout="UnTip()">[<var dec_to_dot($ip)>]</span>
+	</if>
+	<span>
 		[<a href="<var $self>?task=deleteall&amp;board=<var get_board_id()>&amp;ip=<var $ip>"><const S_MPDELETEALL></a>]
 		[<a href="<var $self>?task=ban&amp;board=<var get_board_id()>&amp;type=ipban&amp;ip=<var $ip>&amp;postid=<var $num>"><const S_MPBAN></a>]
 		<if !$parent>
@@ -110,10 +125,10 @@ use constant POST_VIEW_INCLUDE => q{
 
 <div id="posttext_<var $num>">
 <blockquote>
-<var $comment>
-<if $abbrev>
-	<p class="abbrev">[<a href="<var get_reply_link($num,$parent)>" onclick="return expand_post('<var $num>')"><var $abbrev></a>]</p>
-</if>
+	<var $comment>
+	<if $abbrev>
+		<p class="abbrev">[<a href="<var get_reply_link($num,$parent)>" onclick="return expand_post('<var $num>')"><var $abbrev></a>]</p>
+	</if>
 </blockquote>
 </div>
 
@@ -123,15 +138,13 @@ use constant POST_VIEW_INCLUDE => q{
     		<var $omitmsg>
     	</span>
 	</if>
-	<if !$thread>
-		<if !$search && !$single>
-			<script type="text/javascript">
-				if (hiddenThreads.indexOf('t<var $num>,') != -1)
-				{
-					toggleHidden('t<var $num>');
-				}
+	<if !$thread && !$single>
+		<script type="text/javascript">
+			if (hiddenThreads.indexOf('t<var $num>,') != -1)
+			{
+				toggleHidden('t<var $num>');
+			}
 		</script>
-		</if>
 	</if>
 </if>
 

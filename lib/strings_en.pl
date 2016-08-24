@@ -135,6 +135,8 @@ use constant S_BANTRUST => 'No captcha';
 use constant S_BANTRUSTTRIP => 'Tripcode';
 use constant S_BANSECONDS => '(seconds)';
 use constant S_BANEXPIRESNEVER => 'Never';
+use constant S_BANASNUMLABEL => 'AS number';
+use constant S_BANASNUM => 'Ban network'; # ban asn submit
 use constant S_BANFLAG => 'Flag';
 use constant S_BANFLAGDESC => 'Mark post as banned';
 
@@ -157,6 +159,8 @@ use constant S_NOTALLOWED => 'Posting not allowed.'; # Returns error for non-all
 use constant S_UNUSUAL => 'Abnormal reply.'; # Returns error for abnormal reply? (this is a mystery!)
 use constant S_BADHOST => 'Host is banned.'; # Returns error for banned host ($badip string)
 use constant S_BADHOSTPROXY => 'Proxy is banned for being open.'; # Returns error for banned proxy ($badip string)
+use constant S_ASBAN => 'AS Network ban';
+use constant S_DNSBL => 'This IP was listed in <em>%s</em> blacklist!'; # error string for tor node check
 use constant S_RENZOKU => 'Flood detected, post discarded.'; # Returns error for $sec/post spam filter
 use constant S_RENZOKU2 => 'Flood detected, file discarded.'; # Returns error for $sec/upload spam filter
 use constant S_RENZOKU3 => 'Flood detected.'; # Returns error for $sec/similar posts spam filter.
@@ -175,24 +179,28 @@ use constant S_WRONGPASS => 'Management password incorrect.'; # Returns error fo
 use constant S_VIRUS => 'Possible virus-infected file.'; # Returns error for malformed files suspected of being virus-infected.
 use constant S_NOTWRITE => 'Could not write to directory.'; # Returns error when the script cannot write to the directory, the chmod (777) is wrong
 use constant S_SPAM => 'Spammers are not welcome here.'; # Returns error when detecting spam
-use constant S_LOCKED => 'Thread is closed.';
 use constant S_NOBOARDACC => 'You don\'t have access to this board, accessible: %s<br /><a href="%s?task=logout">Logout</a>';
+use constant S_NOACCESS => 'Insufficient privileges';
 use constant S_PREWRAP => '<span class="prewrap">%s</span>';
 
 use constant S_THREADLOCKED => '<strong>Thread %s</strong> is locked. You cannot reply to this thread.';
+use constant S_LOCKED => 'Thread is closed.';
+
+# Tooltip
 use constant S_FILEINFO => 'Information';
 use constant S_FILEDELETED => 'File deleted';
 use constant S_FILENAME => 'File Name:';
+use constant S_POSTINFO => 'Post Information';
 
 use constant S_ICONAUTOSAGE => 'Bumplimit';
 use constant S_ICONLOCKED => 'Closed';
 use constant S_BANNED => 'User was banned for this post';
 
+# leave this alone
+use constant S_AUTOBAN => 'Spambot [Auto Ban]'; # Ban reason for automatically created bans
+
 use constant S_SQLCONF => 'SQL connection failure'; # Database connection failure
 use constant S_SQLFAIL => 'Critical SQL problem!'; # SQL Failure
-
-use constant S_DNSBL => 'This IP was listed in <em>%s</em> blacklist!'; # error string for tor node check
-use constant S_AUTOBAN => 'Spambot [Auto Ban]'; # Ban reason for automatically created bans
 
 use constant S_REDIR => 'If the redirect didn\'t work, please choose one of the following mirrors:'; # Redir message for html in REDIR_DIR
 

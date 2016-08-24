@@ -20,15 +20,10 @@ use constant NORMAL_HEAD_INCLUDE => q{
 </loop>
 
 <script type="text/javascript">
-var style_cookie="<const STYLE_COOKIE>";
-var thread_cookie = "<const BOARD_IDENT>_hidden_threads";
+var style_cookie="<const STYLE_COOKIE>", thread_cookie = "<const BOARD_IDENT>_hidden_threads";
 var board = '<const BOARD_IDENT>', thread_id = <if $thread><var $thread></if><if !$thread>null</if>;
 var filetypes = '<var get_filetypes()>';
-var js_lang = {
-	msg_remove_file: '<const S_JS_REMOVEFILE>',
-	msg_hide_thread: '<const S_JS_HIDETHREAD>',
-	msg_show_thread: '<const S_JS_SHOWTHREAD>'
-};
+var js_lang = {msg_remove_file:'<const S_JS_REMOVEFILE>', msg_hide_thread: '<const S_JS_HIDETHREAD>', msg_show_thread: '<const S_JS_SHOWTHREAD>'};
 </script>
 <script type="text/javascript" src="<var root_path_to_filename('static/js/wakaba3.js')>"></script>
 </head>
@@ -461,6 +456,19 @@ use constant BAN_SHORT_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 </div>
 }.NORMAL_FOOT_INCLUDE);
 
+use constant DURATION_SELECT_INCLUDE => q{
+<if scalar BAN_DATES>
+	<select name="expires">
+		<loop BAN_DATES>
+			<option value="<var $label>"><var clean_string($label)></option>
+		</loop>
+	</select>
+<else>
+	<input type="text" name="expires" size="16" />
+	<small><const S_BANSECONDS></small>
+</if>
+};
+
 use constant BAN_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <div class="dellist"><const S_MANABANS></div>
 
@@ -477,16 +485,7 @@ use constant BAN_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <tr><td class="postblock"><const S_BANCOMMENTLABEL></td><td><input type="text" name="comment" size="16" />
 <input type="submit" value="<const S_BANIP>" /></td></tr>
 <tr><td class="postblock"><const S_BANEXPIRESLABEL></td><td>
-<if scalar BAN_DATES>
-	<select name="expires">
-		<loop BAN_DATES>
-			<option value="<var $label>"><var clean_string($label)></option>
-		</loop>
-	</select>
-<else>
-	<input type="text" name="expires" size="16" />
-	<small><const S_BANSECONDS></small>
-</if>
+}.DURATION_SELECT_INCLUDE.q{
 </td></tr>
 </tbody></table></form>
 
@@ -502,16 +501,7 @@ use constant BAN_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <tr><td class="postblock"><const S_BANCOMMENTLABEL></td><td><input type="text" name="comment" size="16" />
 <input type="submit" value="<const S_BANWHITELIST>" /></td></tr>
 <tr><td class="postblock"><const S_BANEXPIRESLABEL></td><td>
-<if scalar BAN_DATES>
-	<select name="expires">
-		<loop BAN_DATES>
-			<option value="<var $label>"><var clean_string($label)></option>
-		</loop>
-	</select>
-<else>
-	<input type="text" name="expires" size="16" />
-	<small><const S_BANSECONDS></small>
-</if>
+}.DURATION_SELECT_INCLUDE.q{
 </td></tr>
 </tbody></table></form>
 
@@ -526,42 +516,37 @@ use constant BAN_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 <tr><td class="postblock"><const S_BANCOMMENTLABEL></td><td><input type="text" name="comment" size="16" />
 <input type="submit" value="<const S_BANWORD>" /></td></tr>
 <tr><td class="postblock"><const S_BANEXPIRESLABEL></td><td>
-<if scalar BAN_DATES>
-	<select name="expires">
-		<loop BAN_DATES>
-			<option value="<var $label>"><var clean_string($label)></option>
-		</loop>
-	</select>
-<else>
-	<input type="text" name="expires" size="16" />
-	<small><const S_BANSECONDS></small>
-</if>
+}.DURATION_SELECT_INCLUDE.q{
 </td></tr>
 </tbody></table></form>
 
 </td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td valign="bottom">
 
 <form action="<var $self>" method="post">
-<input type="hidden" name="board" value="<const BOARD_IDENT>">
 <input type="hidden" name="task" value="addstring" />
 <input type="hidden" name="type" value="trust" />
+<input type="hidden" name="board" value="<const BOARD_IDENT>" />
 <table><tbody>
 <tr><td class="postblock"><const S_BANTRUSTTRIP></td><td><input type="text" name="string" size="24" /></td></tr>
 <tr><td class="postblock"><const S_BANCOMMENTLABEL></td><td><input type="text" name="comment" size="16" />
 <input type="submit" value="<const S_BANTRUST>" /></td></tr>
 <tr><td class="postblock"><const S_BANEXPIRESLABEL></td><td>
-<if scalar BAN_DATES>
-	<select name="expires">
-		<loop BAN_DATES>
-			<option value="<var $label>"><var clean_string($label)></option>
-		</loop>
-	</select>
-<else>
-	<input type="text" name="expires" size="16" />
-	<small><const S_BANSECONDS></small>
-</if>
+}.DURATION_SELECT_INCLUDE.q{
 </td></tr>
 </tbody></table></form>
+</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td></tr><tr><td valign="bottom" colspan="3">
+
+<form action="<var $self>" method="post">
+<input type="hidden" name="task" value="addstring" />
+<input type="hidden" name="type" value="asban" />
+<input type="hidden" name="board" value="<const BOARD_IDENT>" />
+<table><tbody>
+<tr><td class="postblock"><const S_BANASNUMLABEL></td><td><input type="text" name="string" size="24" /></td></tr>
+<tr><td class="postblock"><const S_BANCOMMENTLABEL></td><td><input type="text" name="comment" size="16" />
+<input type="submit" value="<const S_BANASNUM>" /></td></tr>
+</tbody></table></form>
+
+</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
 </td></tr></tbody></table>
 </div><br />
@@ -597,6 +582,12 @@ use constant BAN_PANEL_TEMPLATE => compile_template(MANAGER_HEAD_INCLUDE.q{
 		<td><if $date><var make_date($date, '2ch')><else><em>undefined</em></if></td>
 		<td><if $expires><var make_date($expires, '2ch')><else><const S_BANEXPIRESNEVER></if></td>
 		<td><var dec_to_dot($ival1)></td><td><var dec_to_dot($ival2)></td>
+	</if>
+	<if $type eq 'asban'>
+		<td>ASNum</td>
+		<td><if $date><var make_date($date, '2ch')><else><em>undefined</em></if></td>
+		<td><if $expires><var make_date($expires, '2ch')><else><const S_BANEXPIRESNEVER></if></td>
+		<td colspan="2"><var $sval1></td>
 	</if>
 
 	<td><var $comment></td>
